@@ -8,6 +8,7 @@ I design enterprise products, engineer them in production code, and hold a pendi
 
 | Project | What it is |
 |---|---|
+| [`decision-intelligence-ui/`](decision-intelligence-ui/) | The interface layer of my Decision Intelligence system - decision registry, integrity breakdowns, counterfactuals, and temporal projections, rebuilt on fixture data. |
 | [`f1-pitwall/`](f1-pitwall/) | Pit Wall - an interactive race engineer's decision surface. Strategy, timing, and telemetry presented the way a pit wall actually consumes it. |
 | [`portfolio-site/`](portfolio-site/) | The production source of [sabahrahman.com](https://www.sabahrahman.com) - a fast, dependency-free portfolio with case studies. |
 

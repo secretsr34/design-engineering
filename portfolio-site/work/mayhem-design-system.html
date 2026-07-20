@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mayhem Design System — Sabah Rahman</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;1,8..60,300;1,8..60,400&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFFFFF;--text:#111111;--text-s:#555555;--text-t:#999999;--accent:#1B3764;--border:#E0E0E0;--surface:#F5F5F5;--serif:'Source Serif 4',Georgia,serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;--mono:'IBM Plex Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6}::selection{background:var(--accent);color:white}
+nav{padding:32px 0;max-width:960px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding-left:48px;padding-right:48px}.nav-n{font-family:var(--serif);font-size:1rem;font-weight:400;color:var(--text);text-decoration:none}.nav-l{display:flex;gap:32px;list-style:none}.nav-l a{text-decoration:none;color:var(--text-t);font-size:14px;transition:color 0.2s}.nav-l a:hover{color:var(--text)}
+.pg{max-width:960px;margin:0 auto;padding:0 48px}
+.case-hero{padding:80px 0 60px;border-bottom:1px solid var(--border)}.case-back{font-size:14px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:40px}.case-back:hover{text-decoration:underline}.case-meta{display:flex;gap:40px;margin-bottom:28px;flex-wrap:wrap}.case-meta-item{display:flex;flex-direction:column;gap:2px}.case-meta-label{font-family:var(--mono);font-size:11px;color:var(--text-t);letter-spacing:0.06em;text-transform:uppercase}.case-meta-val{font-size:14px;color:var(--text-s)}.case-hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(1.8rem,4vw,2.4rem);line-height:1.25;letter-spacing:-0.02em;max-width:700px}.case-hero .case-sub{font-size:15px;color:var(--text-s);line-height:1.7;max-width:600px;margin-top:16px}
+.case-body{padding:60px 0 100px}.case-body h2{font-family:var(--serif);font-weight:500;font-size:1.2rem;margin-top:56px;margin-bottom:14px}.case-body p{font-size:15px;color:var(--text-s);line-height:1.75;margin-bottom:16px;max-width:640px}.case-body img{width:100%;border-radius:8px;margin:32px 0;display:block;border:1px solid var(--border)}.case-body .img-cap{font-size:13px;color:var(--text-t);margin-top:-24px;margin-bottom:32px}
+.case-nav{display:flex;justify-content:space-between;padding:40px 0;border-top:1px solid var(--border)}.case-nav a{font-size:14px;color:var(--accent);text-decoration:none;font-weight:500}.case-nav a:hover{text-decoration:underline}.case-nav .prev::before{content:'← '}
+footer{padding:24px 0;border-top:1px solid var(--border)}.f-inner{display:flex;justify-content:space-between;align-items:center}footer span{font-size:13px;color:var(--text-t)}footer .fl{display:flex;gap:20px}footer .fl a{font-size:13px;color:var(--text-t);text-decoration:none}footer .fl a:hover{color:var(--text)}
+@media(max-width:768px){nav,.pg{padding-left:24px;padding-right:24px}.case-hero{padding:56px 0 48px}.case-meta{gap:20px}.case-nav{flex-direction:column;gap:16px}}
+</style>
+</head>
+<body>
+<nav><a href="/" class="nav-n">Sabah Rahman</a><ul class="nav-l"><li><a href="/framework/">AI Framework</a></li><li><a href="/#work">Work</a></li><li><a href="/f1/pitwall.html">F1</a></li><li><a href="/#contact">Contact</a></li></ul></nav>
+<div class="pg">
+
+<section class="case-hero">
+  <a href="/" class="case-back">← Back to work</a>
+  <div class="case-meta">
+    <div class="case-meta-item"><span class="case-meta-label">Role</span><span class="case-meta-val">UX Lead & Designer</span></div>
+    <div class="case-meta-item"><span class="case-meta-label">For</span><span class="case-meta-val">ForAllSecure</span></div>
+    <div class="case-meta-item"><span class="case-meta-label">Date</span><span class="case-meta-val">Autumn 2020</span></div>
+    <div class="case-meta-item"><span class="case-meta-label">Users</span><span class="case-meta-val">25 Engineers · DoD + Commercial</span></div>
+  </div>
+  <h1>Mayhem Design System</h1>
+  <p class="case-sub">A complete design system built from zero for an ML-driven cybersecurity platform — principles, color architecture, iconography, component guidelines, and usage rules for 25 engineers and hundreds of enterprise customers including the Department of Defense.</p>
+</section>
+
+<section class="case-body">
+
+  <p>When I joined ForAllSecure, Mayhem's visual language hadn't been updated in three years. There were no documented principles, no color usage guidelines, no icon system, and no component standards. Engineers made UI decisions by copying whatever was already on screen. I replaced all of it.</p>
+
+  <h2>Design Principles</h2>
+
+  <p>I structured the system around three principle layers, each governing a different level of design decision. UX principles define how the product behaves. Aesthetic principles define how it looks. Illustration principles define how it communicates visually. Every principle is actionable — not aspirational.</p>
+
+  <img src="../images/mayhem-design-system/principles-ux.png" alt="General UX Design Principles">
+  <p class="img-cap">UX Principles: glanceable, universal, balanced, efficient. A fuzz testing product that also happens to be visually appealing.</p>
+
+  <img src="../images/mayhem-design-system/principles-aesthetic.png" alt="Product Aesthetic Principles">
+  <p class="img-cap">Aesthetic Principles: simple, clear, consistent, modern. The product went from dated to current without losing technical credibility.</p>
+
+  <img src="../images/mayhem-design-system/principles-illustration.png" alt="Product Illustration Principles">
+  <p class="img-cap">Illustration Principles: rhythmic, delightful, considerate, relevant. Guidelines for every visual element engineers might need to create or modify.</p>
+
+  <h2>Color Architecture</h2>
+
+  <p>The color system separates base colors (structural — navigation, backgrounds, status indicators) from decorative colors (contextual — icons, onboarding, data visualization). Every color has a documented hex value, a named usage, and a clear rule for when to use it and when not to.</p>
+
+  <img src="../images/mayhem-design-system/color-palette.png" alt="Base and decorative color palettes">
+  <p class="img-cap">Complete color system: 11 base colors with structural roles, 9 decorative colors with contextual uses. Every hex value documented.</p>
+
+  <img src="../images/mayhem-design-system/color-guidelines.png" alt="Color combination dos and don'ts">
+  <p class="img-cap">Usage guidelines: contrast rules, hover state patterns, button hierarchy, hyperlink treatment, and palette restrictions. Do/don't format eliminates ambiguity.</p>
+
+  <h2>Iconography</h2>
+
+  <p>Mayhem detects specific categories of software defects, each mapped to CWE (Common Weakness Enumeration) standards. I designed 13 custom defect icons — each one visually distinct at small sizes, semantically tied to its defect category, and mapped to specific CWE numbers for engineering reference.</p>
+
+  <img src="../images/mayhem-design-system/icons.png" alt="Custom defect icons mapped to CWE numbers">
+  <p class="img-cap">13 custom defect icons: Out of Bounds Read/Write/Access, Null Pointer Dereference, Input Validation, Size Calculation, Undefined Behavior, Memory Management, Lifetime, Logic — each with CWE mappings.</p>
+
+  <h2>Impact</h2>
+
+  <p>The design system shipped to 25 engineers building features across the platform. It was adopted by both commercial and federal (DoD) product teams. Engineers stopped guessing. The product started looking like one product instead of twelve features built by twelve different people.</p>
+
+</section>
+
+<div class="case-nav">
+  <a href="/work/mayhem-results.html" class="prev">Mayhem Results Redesign</a>
+  <span></span>
+</div>
+
+<footer><div class="f-inner"><span>© 2026 Sabah Rahman</span><div class="fl"><a href="https://www.linkedin.com/in/sabahr/">LinkedIn</a><a href="mailto:sabahr2@gmail.com">Email</a></div></div></footer>
+
+</div>
+</body>
+</html>

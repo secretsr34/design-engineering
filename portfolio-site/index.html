@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sabah Rahman</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;1,8..60,300;1,8..60,400&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FFFFFF;--text:#111111;--text-s:#555555;--text-t:#999999;
+    --accent:#1B3764;--green:#2D6A4F;--border:#E0E0E0;--surface:#F5F5F5;
+    --serif:'Source Serif 4',Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --mono:'IBM Plex Mono',monospace;
+    --ease-out:cubic-bezier(0.16,1,0.3,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6}
+  ::selection{background:var(--accent);color:white}
+
+  /* NAV */
+  nav{padding:32px 0;max-width:960px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding-left:48px;padding-right:48px}
+  .nav-n{font-family:var(--serif);font-size:1rem;font-weight:400;color:var(--text);text-decoration:none}
+  .nav-l{display:flex;gap:32px;list-style:none}
+  .nav-l a{text-decoration:none;color:var(--text-t);font-size:14px;transition:color 0.2s}
+  .nav-l a:hover{color:var(--text)}
+
+  .pg{max-width:960px;margin:0 auto;padding:0 48px}
+
+  /* HERO */
+  .hero{padding:100px 0 80px}
+  .hero-tag{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:24px;padding:6px 14px;border:1px solid rgba(27,55,100,0.25);border-radius:20px;background:rgba(27,55,100,0.04);opacity:0;animation:fadeIn 0.6s ease forwards}
+  .hero-tag .dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2.5s ease infinite;flex-shrink:0}
+  a.hero-tag{text-decoration:none;margin-left:8px}
+  a.hero-tag:hover{background:rgba(27,55,100,0.09)}
+  @media(max-width:600px){a.hero-tag{margin-left:0}}
+  .hero h1{font-family:var(--serif);font-weight:300;font-size:clamp(2.6rem,5.5vw,3.6rem);line-height:1.18;letter-spacing:-0.025em;max-width:760px;opacity:0;animation:fadeIn 0.8s ease 0.15s forwards}
+
+  .hero-credentials{margin-top:48px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);opacity:0;animation:fadeIn 0.8s ease 0.4s forwards}
+  .hero-cred{padding:28px 24px 28px 0;border-right:1px solid var(--border)}
+  .hero-cred:not(:first-child){padding-left:24px}
+  .hero-cred:last-child{border-right:none}
+  .hero-cred .cred-val{font-family:var(--serif);font-weight:500;font-size:1.5rem;letter-spacing:-0.02em;line-height:1.2;color:var(--accent)}
+  .hero-cred .cred-label{font-size:13px;color:var(--text-s);margin-top:4px;line-height:1.4}
+
+  .hero-lnk{margin-top:40px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;opacity:0;animation:fadeIn 0.8s ease 0.6s forwards}
+  .hero-lnk a{font-size:14px;color:var(--accent);text-decoration:none;font-weight:500}
+  .hero-lnk a:hover{text-decoration:underline;text-underline-offset:3px}
+  .hero-lnk .cta-primary{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:var(--accent);color:white;border-radius:6px;font-weight:500;transition:background 0.2s ease,transform 0.2s var(--ease-out)}
+  .hero-lnk .cta-primary:hover{background:#142a4f;text-decoration:none;transform:translateY(-1px)}
+  .hero-lnk .sep{color:var(--text-t);font-size:13px;margin:0 4px}
+
+  /* WHAT I DO */
+  .capabilities{padding:80px 0;border-bottom:1px solid var(--border)}
+  .cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:48px}
+  .cap h3{font-family:var(--serif);font-weight:500;font-size:1rem;margin-bottom:8px}
+  .cap p{font-size:14px;color:var(--text-s);line-height:1.65}
+
+  /* FEATURED */
+  .feat-section{padding:100px 0;border-bottom:1px solid var(--border)}
+  .feat-card{background:var(--surface);border-radius:12px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;min-height:400px}
+  .feat-vis{background:#1A1918;display:flex;align-items:center;justify-content:center;padding:48px}
+  .feat-vis svg{width:100%;max-width:300px;height:auto;overflow:visible}
+  .feat-txt{padding:52px 48px;display:flex;flex-direction:column;justify-content:center}
+  .feat-txt .tag{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:20px}
+  .feat-txt h2{font-family:var(--serif);font-weight:400;font-size:1.65rem;line-height:1.3;letter-spacing:-0.015em;margin-bottom:14px}
+  .feat-txt p{font-size:15px;color:var(--text-s);line-height:1.7}
+  .feat-txt .pat{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-size:13px;color:var(--text-t)}
+  .feat-txt .pat .dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2.5s ease infinite}
+  .feat-txt .ctas{display:flex;align-items:center;gap:18px;margin-top:24px;flex-wrap:wrap}
+  .feat-txt .cta-primary{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:var(--accent);color:white;font-size:14px;font-weight:500;text-decoration:none;border-radius:6px;transition:background 0.2s ease,transform 0.2s var(--ease-out)}
+  .feat-txt .cta-primary:hover{background:#142a4f;transform:translateY(-1px)}
+  .feat-txt .cta-secondary{font-size:14px;color:var(--accent);text-decoration:none;font-weight:500}
+  .feat-txt .cta-secondary:hover{text-decoration:underline;text-underline-offset:3px}
+  .f-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:48px}
+  .f-item{padding:28px 0;border-top:1px solid var(--border)}
+  .f-item:not(:last-child){padding-right:40px}
+  .f-item h3{font-family:var(--serif);font-weight:500;font-size:1rem;margin-bottom:8px}
+  .f-item p{font-size:14px;color:var(--text-s);line-height:1.6}
+
+  /* WORK */
+  .sec{padding:100px 0 0}
+  .sec h2{font-family:var(--serif);font-weight:400;font-size:1.5rem;letter-spacing:-0.01em;margin-bottom:48px}
+
+  .co-block{padding:56px 0;border-bottom:1px solid var(--border);position:relative}
+  .co-block:last-child{border-bottom:none}
+  .co-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+  .co-name{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:0.04em;text-transform:uppercase;font-weight:400}
+  .co-role{font-size:13px;color:var(--text-t)}
+  .co-title{font-family:var(--serif);font-weight:400;font-size:1.3rem;letter-spacing:-0.01em;margin-bottom:8px;line-height:1.35}
+  .co-desc{font-size:14px;color:var(--text-s);line-height:1.65;max-width:600px;margin-bottom:24px}
+
+  .project-list{display:flex;flex-direction:column}
+  .project-link{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid var(--border);font-size:14px;color:var(--text);text-decoration:none;transition:color 0.2s,padding-left 0.3s var(--ease-out)}
+  .project-link:hover{color:var(--accent);padding-left:8px}
+  .project-link .arrow{color:var(--text-t);font-size:13px;transition:color 0.2s,transform 0.2s var(--ease-out)}
+  .project-link:hover .arrow{color:var(--accent);transform:translateX(3px)}
+
+  /* AMAZON LOCK */
+  .co-lock{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.4s ease}
+  .co-lock.unlocked{opacity:0;pointer-events:none}
+  .co-lock .lock-icon{font-size:1.2rem;margin-bottom:10px;opacity:0.5}
+  .co-lock .lock-label{font-size:13px;color:var(--text-s);margin-bottom:14px}
+  .co-lock .lock-form{display:flex;gap:8px}
+  .co-lock .lock-input{font-family:var(--sans);font-size:14px;padding:8px 14px;border-radius:4px;border:1px solid var(--border);background:white;color:var(--text);outline:none;width:110px;letter-spacing:0.06em;text-align:center;-webkit-appearance:none}
+  .co-lock .lock-input:focus{border-color:var(--accent)}
+  .co-lock .lock-input.error{border-color:#EA4335;animation:shake 0.4s}
+  .co-lock .lock-btn{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text-s);cursor:pointer}
+  .co-lock .lock-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
+
+  /* CONTACT */
+  .contact{padding:100px 0 120px;border-top:1px solid var(--border)}
+  .contact h2{font-family:var(--serif);font-weight:400;font-size:1.65rem;letter-spacing:-0.015em;margin-bottom:14px}
+  .contact p{font-size:15px;color:var(--text-s);line-height:1.7;max-width:440px}
+  .contact-lnk{margin-top:28px;display:flex;gap:24px}
+  .contact-lnk a{font-size:14px;color:var(--accent);text-decoration:none;font-weight:500}
+  .contact-lnk a:hover{text-decoration:underline;text-underline-offset:3px}
+
+  /* FOOTER */
+  footer{padding:24px 0;border-top:1px solid var(--border)}
+  .f-inner{display:flex;justify-content:space-between;align-items:center}
+  footer span{font-size:13px;color:var(--text-t)}
+  footer .fl{display:flex;gap:20px}
+  footer .fl a{font-size:13px;color:var(--text-t);text-decoration:none}
+  footer .fl a:hover{color:var(--text)}
+
+  /* ANIMATIONS */
+  @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+  @keyframes nodeGlow{0%,100%{opacity:0.2}50%{opacity:0.5}}
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease}
+  .reveal.vis{opacity:1;transform:translateY(0)}
+
+  @media(max-width:768px){
+    nav,.pg{padding-left:24px;padding-right:24px}
+    .hero{padding:72px 0 60px}
+    .hero h1{font-size:2rem}
+    .hero-credentials{grid-template-columns:repeat(2,1fr)}
+    .hero-cred:nth-child(2){border-right:none}
+    .cap-grid{grid-template-columns:1fr}
+    .feat-card{grid-template-columns:1fr}
+    .feat-vis{min-height:220px}
+    .feat-txt{padding:32px 28px}
+    .f-strip{grid-template-columns:1fr}
+    .f-item:not(:last-child){padding-right:0}
+    .nav-l{gap:20px}
+    .hero-lnk{flex-direction:column;gap:12px}
+    .contact-lnk{flex-direction:column;gap:12px}
+    footer .f-inner{flex-direction:column;gap:8px}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-n">Sabah Rahman</a>
+  <ul class="nav-l">
+    <li><a href="/framework/">AI Framework</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="/f1/pitwall.html">F1</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<div class="pg">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tag"><span class="dot"></span>Patent Pending · USPTO 2026</div><a class="hero-tag" href="https://www.airisksummit.com/speakers" target="_blank" rel="noopener">Speaker · AI Risk Summit · Aug 2026 ↗</a>
+    <h1>I design enterprise products, engineer them in production code, and invented a patent-pending AI framework along the way.</h1>
+
+    <div class="hero-credentials">
+      <div class="hero-cred">
+        <div class="cred-val">10+</div>
+        <div class="cred-label">Years shipping enterprise products</div>
+      </div>
+      <div class="hero-cred">
+        <div class="cred-val">1</div>
+        <div class="cred-label">US patent pending (AI explainability)</div>
+      </div>
+      <div class="hero-cred">
+        <div class="cred-val">Amazon</div>
+        <div class="cred-label">Feedzai · ForAllSecure · Lessen</div>
+      </div>
+      <div class="hero-cred">
+        <div class="cred-val">React</div>
+        <div class="cred-label">Production code, not prototypes</div>
+      </div>
+    </div>
+
+    <div class="hero-lnk">
+      <a href="/framework/" class="cta-primary">The AI framework ↗</a>
+      <a href="#work">Selected work ↗</a>
+    </div>
+  </section>
+
+  <!-- CAPABILITIES -->
+  <section class="capabilities reveal">
+    <div class="cap-grid">
+      <div class="cap">
+        <h3>Design Leadership</h3>
+        <p>UX architecture, design systems, and product strategy for high-complexity enterprise systems. I've built UX functions from zero and shipped to millions.</p>
+      </div>
+      <div class="cap">
+        <h3>Front-End Engineering</h3>
+        <p>Production React, JSX, HTML5, CSS3, JavaScript. My prototypes are the product. Teams I've worked with cut development rework by 30%.</p>
+      </div>
+      <div class="cap">
+        <h3>AI Explainability</h3>
+        <p>Invented a patent-pending deterministic framework that makes black-box AI auditable — built for EU AI Act and Colorado AI Act compliance.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK -->
+  <section class="sec" id="work">
+    <h2 class="reveal">Selected work</h2>
+
+    <!-- AMAZON -->
+    <div class="co-block reveal" id="amazonBlock">
+      <div class="co-lock" id="amazonLock">
+        <div class="lock-icon">🔒</div>
+        <span class="lock-label">Amazon work samples are password protected</span>
+        <div class="lock-form">
+          <input type="password" class="lock-input" id="amazonPwInput" placeholder="Password" autocomplete="off" />
+          <button class="lock-btn" id="amazonPwBtn">Enter</button>
+        </div>
+      </div>
+      <div class="co-header">
+        <span class="co-name">Amazon</span>
+        <span class="co-role">Senior UX Designer · 2022–Present</span>
+      </div>
+      <h3 class="co-title">Device Software & Services</h3>
+      <p class="co-desc">Enterprise UX and production React engineering across device fleet management, beta testing operations, and AI-powered automation — serving millions of customers and tens of thousands of internal users.</p>
+      <div class="project-list">
+        <a href="/work/amazon-beta-services.html" class="project-link"><span>Beta Services Platform</span><span class="arrow">↗</span></a>
+        <a href="/work/amazon-ai-prototyping.html" class="project-link"><span>Frustration Free Automation — LLM + React</span><span class="arrow">↗</span></a>
+      </div>
+    </div>
+
+    <!-- DECISION INTELLIGENCE -->
+    <div class="co-block reveal">
+      <div class="co-header">
+        <span class="co-name">Independent</span>
+        <span class="co-role">Designer & Engineer · 2025</span>
+      </div>
+      <h3 class="co-title">Decision Intelligence: Reasoning Architecture</h3>
+      <p class="co-desc">AI-assisted system that evaluates how decisions are structured — three scoring engines, cognitive bias detection, structured decision output. Production JavaScript, not a UI wrapper.</p>
+      <div class="project-list">
+        <a href="/work/decision-intelligence.html" class="project-link"><span>Decision Intelligence — Prototype & Case Study</span><span class="arrow">↗</span></a>
+      </div>
+    </div>
+
+    <!-- FORALLSECURE -->
+    <div class="co-block reveal">
+      <div class="co-header">
+        <span class="co-name">ForAllSecure</span>
+        <span class="co-role">UX Lead & Designer · 2019–2021</span>
+      </div>
+      <h3 class="co-title">Mayhem — ML-Driven Cybersecurity Platform</h3>
+      <p class="co-desc">Founded and led UX from zero. Built design systems, dashboards, and research frameworks for an autonomous security testing platform serving enterprise and Department of Defense customers.</p>
+      <div class="project-list">
+        <a href="/work/mayhem-results.html" class="project-link"><span>Results Page — Before & After Redesign</span><span class="arrow">↗</span></a>
+        <a href="/work/mayhem-design-system.html" class="project-link"><span>Design System — Built for 25 Engineers + DoD</span><span class="arrow">↗</span></a>
+      </div>
+    </div>
+
+    <!-- FEEDZAI -->
+    <div class="co-block reveal">
+      <div class="co-header">
+        <span class="co-name">Feedzai</span>
+        <span class="co-role">Head Researcher · 2018–2019</span>
+      </div>
+      <h3 class="co-title">AI/ML Fraud Detection Products</h3>
+      <p class="co-desc">Led research across three ML-powered fraud detection products for global financial institutions. Cut investigation time from days to hours.</p>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact reveal" id="contact">
+    <h2>Get in touch</h2>
+    <p>Exploring the AI framework for your compliance roadmap, or looking for a design and engineering leader who ships production code.</p>
+    <div class="contact-lnk">
+      <a href="mailto:sabahr2@gmail.com">Email ↗</a>
+      <a href="https://www.linkedin.com/in/sabahr/">LinkedIn ↗</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="f-inner">
+      <span>© 2026 Sabah Rahman</span>
+      <div class="fl">
+        <a href="https://www.linkedin.com/in/sabahr/">LinkedIn</a>
+        <a href="mailto:sabahr2@gmail.com">Email</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('vis');obs.unobserve(x.target)}})},{threshold:0.08});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+  // Amazon work lock — 3232 — real NDA gate, this one stays
+  const aL=document.getElementById('amazonLock'),aI=document.getElementById('amazonPwInput'),aB=document.getElementById('amazonPwBtn');
+  function tryA(){if(aI.value.trim()==='3232'){aL.classList.add('unlocked')}else{aI.classList.add('error');setTimeout(()=>aI.classList.remove('error'),600);aI.value='';aI.focus()}}
+  aB.addEventListener('click',e=>{e.preventDefault();tryA()});
+  aI.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();tryA()}});
+</script>
+</body>
+</html>

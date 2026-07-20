@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mayhem Results Redesign — Sabah Rahman</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;1,8..60,300;1,8..60,400&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFFFFF;--text:#111111;--text-s:#555555;--text-t:#999999;--accent:#1B3764;--border:#E0E0E0;--surface:#F5F5F5;--serif:'Source Serif 4',Georgia,serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;--mono:'IBM Plex Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6}::selection{background:var(--accent);color:white}
+nav{padding:32px 0;max-width:960px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding-left:48px;padding-right:48px}.nav-n{font-family:var(--serif);font-size:1rem;font-weight:400;color:var(--text);text-decoration:none}.nav-l{display:flex;gap:32px;list-style:none}.nav-l a{text-decoration:none;color:var(--text-t);font-size:14px;transition:color 0.2s}.nav-l a:hover{color:var(--text)}
+.pg{max-width:960px;margin:0 auto;padding:0 48px}
+.case-hero{padding:80px 0 60px;border-bottom:1px solid var(--border)}.case-back{font-size:14px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:40px}.case-back:hover{text-decoration:underline}.case-meta{display:flex;gap:40px;margin-bottom:28px;flex-wrap:wrap}.case-meta-item{display:flex;flex-direction:column;gap:2px}.case-meta-label{font-family:var(--mono);font-size:11px;color:var(--text-t);letter-spacing:0.06em;text-transform:uppercase}.case-meta-val{font-size:14px;color:var(--text-s)}.case-hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(1.8rem,4vw,2.4rem);line-height:1.25;letter-spacing:-0.02em;max-width:700px}.case-hero .case-sub{font-size:15px;color:var(--text-s);line-height:1.7;max-width:600px;margin-top:16px}
+.case-body{padding:60px 0 100px}.case-body h2{font-family:var(--serif);font-weight:500;font-size:1.2rem;margin-top:56px;margin-bottom:14px}.case-body p{font-size:15px;color:var(--text-s);line-height:1.75;margin-bottom:16px;max-width:640px}.case-body img{width:100%;border-radius:8px;margin:32px 0;display:block;border:1px solid var(--border)}.case-body .img-cap{font-size:13px;color:var(--text-t);margin-top:-24px;margin-bottom:32px}
+.case-nav{display:flex;justify-content:space-between;padding:40px 0;border-top:1px solid var(--border)}.case-nav a{font-size:14px;color:var(--accent);text-decoration:none;font-weight:500}.case-nav a:hover{text-decoration:underline}.case-nav .prev::before{content:'← '}.case-nav .next::after{content:' →'}
+footer{padding:24px 0;border-top:1px solid var(--border)}.f-inner{display:flex;justify-content:space-between;align-items:center}footer span{font-size:13px;color:var(--text-t)}footer .fl{display:flex;gap:20px}footer .fl a{font-size:13px;color:var(--text-t);text-decoration:none}footer .fl a:hover{color:var(--text)}
+@media(max-width:768px){nav,.pg{padding-left:24px;padding-right:24px}.case-hero{padding:56px 0 48px}.case-meta{gap:20px}.case-nav{flex-direction:column;gap:16px}}
+</style>
+</head>
+<body>
+<nav><a href="/" class="nav-n">Sabah Rahman</a><ul class="nav-l"><li><a href="/framework/">AI Framework</a></li><li><a href="/#work">Work</a></li><li><a href="/f1/pitwall.html">F1</a></li><li><a href="/#contact">Contact</a></li></ul></nav>
+<div class="pg">
+
+<section class="case-hero">
+  <a href="/" class="case-back">← Back to work</a>
+  <div class="case-meta">
+    <div class="case-meta-item"><span class="case-meta-label">Role</span><span class="case-meta-val">UX Lead & Designer</span></div>
+    <div class="case-meta-item"><span class="case-meta-label">For</span><span class="case-meta-val">ForAllSecure</span></div>
+    <div class="case-meta-item"><span class="case-meta-label">Date</span><span class="case-meta-val">Summer 2021</span></div>
+    <div class="case-meta-item"><span class="case-meta-label">Validation</span><span class="case-meta-val">100% positive — 6 users</span></div>
+  </div>
+  <h1>Mayhem Results Page — Before and After</h1>
+  <p class="case-sub">The results page is where Mayhem earns its value — it's where users see what the autonomous security testing found. The old design made that nearly impossible to parse. I fixed it.</p>
+</section>
+
+<section class="case-body">
+
+  <h2>The Problem</h2>
+
+  <p>The original results page was a wall of data that only made sense if you'd been using the product for five months. Unorganized links, confusing phase indicators that implied sequential dependency when there was none, and a defect table that required deep security expertise just to scan. New users hit this page and bounced.</p>
+
+  <img src="../images/mayhem-results/before.png" alt="Original results page design">
+  <p class="img-cap">Before: defect tables and test case views with no hierarchy, no status clarity, and no path forward for the user.</p>
+
+  <h2>Exploration</h2>
+
+  <p>I explored three structural concepts before converging on the final direction. Each concept addressed the core problem differently — how do you take a wall of security testing data and make it scannable in seconds?</p>
+
+  <img src="../images/mayhem-results/wireframe-filtering.png" alt="Concept 1: filtering approach">
+  <p class="img-cap">Concept 1 — Filtering: tab-based separation of overview, regression testing, behavior testing, and next steps. Content stays in place, context switches via tabs.</p>
+
+  <img src="../images/mayhem-results/wireframe-collapsing.png" alt="Concept 2: collapsing elements">
+  <p class="img-cap">Concept 2 — Collapsing: progressive disclosure with expandable sections. Users drill into the data they need without leaving the page.</p>
+
+  <img src="../images/mayhem-results/wireframe-sidebar.png" alt="Concept 3: sidebar navigation">
+  <p class="img-cap">Concept 3 — Sidebar: persistent navigation with contextual content panels. Overview always accessible, detail views load in the main area.</p>
+
+  <h2>The Redesign</h2>
+
+  <p>The final design replaced the confusing "phases" with clearly labeled "tasks" — status-tagged, time-stamped, and visually distinct. Key metrics surface immediately: 48 defects found, 128 crashes, 257 errors, 2.5M tests run. A live test suite graph shows progress over time. Filterable defect and test case tables sit below, with clear severity indicators and downloadable results.</p>
+
+  <img src="../images/mayhem-results/after-stepper.png" alt="Redesigned results page with phase stepper">
+  <p class="img-cap">After: phase stepper with clear status, key metrics at a glance, live graph, and structured test case table with crash indicators and triage status.</p>
+
+  <img src="../images/mayhem-results/after-sidebar.png" alt="Redesigned results page with sidebar navigation">
+  <p class="img-cap">Full results page: sidebar navigation, task status bar, analysis metrics, time-series graph, filterable defect table with pagination.</p>
+
+  <img src="../images/mayhem-results/layout-variations.png" alt="Three layout states">
+  <p class="img-cap">Three states: open sidebar with defects table, closed sidebar with test cases, and behavior-testing-filtered view. Each optimized for a different user task.</p>
+
+  <img src="../images/mayhem-results/behavior-mockups.png" alt="Behavior testing filter states">
+  <p class="img-cap">Behavior testing dropdown and defect filter interactions — designed to surface exactly the data the user needs without cognitive overload.</p>
+
+  <h2>Validation</h2>
+
+  <p>Tested the new design against the original with 6 commercial users. Every single one gave positive feedback. Every single one reported feeling immediately at ease understanding the information. Users described it as "a calmer experience" — which, for a security testing tool that surfaces vulnerability data, is exactly the right outcome.</p>
+
+</section>
+
+<div class="case-nav">
+  <a href="/work/amazon-beta-services.html" class="prev">Amazon Beta Services</a>
+  <a href="/work/mayhem-design-system.html" class="next">Mayhem Design System</a>
+</div>
+
+<footer><div class="f-inner"><span>© 2026 Sabah Rahman</span><div class="fl"><a href="https://www.linkedin.com/in/sabahr/">LinkedIn</a><a href="mailto:sabahr2@gmail.com">Email</a></div></div></footer>
+
+</div>
+</body>
+</html>

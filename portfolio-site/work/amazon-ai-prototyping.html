@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frustration Free Automation — Sabah Rahman</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;1,8..60,300;1,8..60,400&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFFFFF;--text:#111111;--text-s:#555555;--text-t:#999999;--accent:#1B3764;--green:#2D6A4F;--border:#E0E0E0;--surface:#F5F5F5;--serif:'Source Serif 4',Georgia,serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;--mono:'IBM Plex Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6}::selection{background:var(--accent);color:white}
+nav{padding:32px 0;max-width:960px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding-left:48px;padding-right:48px}.nav-n{font-family:var(--serif);font-size:1rem;font-weight:400;color:var(--text);text-decoration:none}.nav-l{display:flex;gap:32px;list-style:none}.nav-l a{text-decoration:none;color:var(--text-t);font-size:14px;transition:color 0.2s}.nav-l a:hover{color:var(--text)}
+.pg{max-width:960px;margin:0 auto;padding:0 48px}
+.case-hero{padding:80px 0 60px;border-bottom:1px solid var(--border)}.case-back{font-size:14px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:40px}.case-back:hover{text-decoration:underline}.case-meta{display:flex;gap:40px;margin-bottom:28px;flex-wrap:wrap}.case-meta-item{display:flex;flex-direction:column;gap:2px}.case-meta-label{font-family:var(--mono);font-size:11px;color:var(--text-t);letter-spacing:0.06em;text-transform:uppercase}.case-meta-val{font-size:14px;color:var(--text-s)}.case-hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(1.8rem,4vw,2.4rem);line-height:1.25;letter-spacing:-0.02em;max-width:700px}.case-hero .case-sub{font-size:15px;color:var(--text-s);line-height:1.7;max-width:600px;margin-top:16px}
+.case-body{padding:60px 0 100px}.case-body h2{font-family:var(--serif);font-weight:500;font-size:1.2rem;margin-top:56px;margin-bottom:14px}.case-body p{font-size:15px;color:var(--text-s);line-height:1.75;margin-bottom:16px;max-width:640px}.case-body img{width:100%;border-radius:8px;margin:32px 0;display:block;border:1px solid var(--border)}.case-body .img-cap{font-size:13px;color:var(--text-t);margin-top:-24px;margin-bottom:32px}
+.case-nav{display:flex;justify-content:space-between;padding:40px 0;border-top:1px solid var(--border)}.case-nav a{font-size:14px;color:var(--accent);text-decoration:none;font-weight:500}.case-nav a:hover{text-decoration:underline}.case-nav .prev::before{content:'← '}.case-nav .next::after{content:' →'}
+footer{padding:24px 0;border-top:1px solid var(--border)}.f-inner{display:flex;justify-content:space-between;align-items:center}footer span{font-size:13px;color:var(--text-t)}footer .fl{display:flex;gap:20px}footer .fl a{font-size:13px;color:var(--text-t);text-decoration:none}footer .fl a:hover{color:var(--text)}
+@media(max-width:768px){nav,.pg{padding-left:24px;padding-right:24px}.case-hero{padding:56px 0 48px}.case-meta{gap:20px}.case-nav{flex-direction:column;gap:16px}}
+</style>
+</head>
+<body>
+<nav><a href="/" class="nav-n">Sabah Rahman</a><ul class="nav-l"><li><a href="/framework/">AI Framework</a></li><li><a href="/#work">Work</a></li><li><a href="/f1/pitwall.html">F1</a></li><li><a href="/#contact">Contact</a></li></ul></nav>
+<div class="pg">
+
+<section class="case-hero">
+  <a href="/" class="case-back">← Back to work</a>
+  <div class="case-meta">
+    <div class="case-meta-item"><span class="case-meta-label">Role</span><span class="case-meta-val">Design Lead</span></div>
+    <div class="case-meta-item"><span class="case-meta-label">For</span><span class="case-meta-val">Amazon Devices & Services</span></div>
+    <div class="case-meta-item"><span class="case-meta-label">Date</span><span class="case-meta-val">Late 2025</span></div>
+    <div class="case-meta-item"><span class="case-meta-label">Stack</span><span class="case-meta-val">React · Cloudscape · LLM Toolkit</span></div>
+  </div>
+  <h1>Frustration Free Automation</h1>
+  <p class="case-sub">A production-code prototype for stackable, multi-device Alexa routines — designed, architected, and engineered by me using React, AWS Cloudscape, and Amazon's internal LLM tools.</p>
+</section>
+
+<section class="case-body">
+
+  <p>Amazon's device ecosystem lets customers create simple automations — turn on a light, lock a door. But the complexity ceiling is low. There's no way to stack routines across device types, chain triggers conditionally, or manage automations at fleet scale. This project solves that.</p>
+
+  <p>I designed and built a fully functional multi-page React application — not a Figma prototype, not a clickable mockup. Production-quality code using AWS Cloudscape components, real device data models, and a 4-step wizard flow for creating complex cross-device automations.</p>
+
+  <video src="../videos/amazon-ffa-recording.mp4" controls playsinline preload="metadata" style="width:100%;border-radius:8px;margin:32px 0;display:block;border:1px solid var(--border)"></video>
+  <p class="img-cap">Full walkthrough of the Frustration Free Automation prototype.</p>
+
+  <h2>Application Architecture</h2>
+
+  <p>The application spans 12 pages across assets, components, and page-level views — including a multi-step wizard, automation dashboard, validation system, approval flow, and notification handling. Every page is functional React with real state management, not static HTML.</p>
+
+  <img src="../images/amazon-ffa/file-tree.png" alt="VS Code project file tree">
+  <p class="img-cap">Full project structure: 12 page views, shared component library, custom styles, asset management.</p>
+
+  <h2>Production React</h2>
+
+  <p>The codebase uses React hooks (useState, useCallback, useMemo), AWS Cloudscape component library (Wizard, ColumnLayout, Table, ButtonDropdown), and a modular trigger category system that maps device capabilities, compatibility rules, and targeting requirements.</p>
+
+  <img src="../images/amazon-ffa/code-wizard.png" alt="Wizard component with trigger categories">
+  <p class="img-cap">Trigger category data model: device types, capabilities, options, compatibility mapping — all structured for extensibility.</p>
+
+  <img src="../images/amazon-ffa/code-react.png" alt="React component with Cloudscape integration">
+  <p class="img-cap">MyAutomationsPage component: real device data, state management, navigation routing, action handling.</p>
+
+  <img src="../images/amazon-ffa/code-styles.png" alt="CSS and Cloudscape styling">
+  <p class="img-cap">Custom styling layer on top of Cloudscape: Amazon Ember font stack, branded button overrides, hover state management.</p>
+
+  <h2>How It Was Built</h2>
+
+  <p>My team uses Cline and Kiro CLI paired with Visual Studio Code — Amazon's internal LLM-assisted development tools. I combined these with manual coding and design expertise to produce a living, interactive prototype that stakeholders could actually use, not just watch a screen recording of.</p>
+
+  <p>This is what happens when a designer writes production code. The gap between "what we designed" and "what engineering built" doesn't exist, because they're the same artifact.</p>
+
+</section>
+
+<div class="case-nav">
+  <a href="/work/decision-intelligence.html" class="prev">Decision Intelligence</a>
+  <a href="/work/amazon-beta-services.html" class="next">Amazon Beta Services</a>
+</div>
+
+<footer><div class="f-inner"><span>© 2026 Sabah Rahman</span><div class="fl"><a href="https://www.linkedin.com/in/sabahr/">LinkedIn</a><a href="mailto:sabahr2@gmail.com">Email</a></div></div></footer>
+
+</div>
+</body>
+</html>

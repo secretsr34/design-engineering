@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pit Wall · Race Engineer's Decision Surface</title>
+<style>
+  :root{
+    /* Warm-dark surfaces — matches the FastF1 community standard (#292625 / #1e1c1b),
+       what every public F1 analysis tool defaults to. Cold blue-black reads as
+       "Stripe dashboard"; warm dark reads as "engineering workstation". */
+    --bg:#1A1817; --panel:#211F1E; --panel-2:#161413; --line:#2D2928;
+    /* warm off-white ink, not pure white. less eye-strain on warm surfaces */
+    --ink:#F1F1F3; --ink-dim:#ACA7A4; --ink-faint:#75716E;
+    /* driver entities — actual F1 brand colors (Mercedes teal, Red Bull cobalt).
+       Overwritten at runtime by d.meta.driverA.color / driverB.color. */
+    --teal:#27F4D2;
+    --blue:#3671C6;
+    /* attention — slider, highlights, events, mid-urgency status.
+       single warm hue so the eye learns "anything amber = look here, not a driver". */
+    --amber:#FFB740;
+    /* critical status — Dracula red, common in pro telemetry tools */
+    --red:#FF5555;
+    /* neutral context — warm gray for ghosted forecasts, "no winner" track segments */
+    --mute:#3D3936;
+    /* tyre compounds (FIA convention) */
+    --hard:#F1F1F3; --med:#FFD23F; --soft:#FF6B6B; --inter:#43B02A; --wet:#0067AD;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  /* Light theme — warm light surfaces (off-white, slightly tan) so the palette
+     stays in the same warm-temperature family. Cold gray-white feels clinical;
+     warm light feels like reading printed engineering paperwork. */
+  :root[data-theme="light"]{
+    --bg:#FAF8F5; --panel:#FFFFFF; --panel-2:#F5F2EE; --line:#DDD8D2;
+    --ink:#2A2624; --ink-dim:#6B6661; --ink-faint:#999188;
+    --amber:#B8651A; --red:#C53030;
+    --mute:#C4BFB8;
+    /* HARD tyre is FIA white — re-tinted to a dark warm gray on light bg */
+    --hard:#3A2E26; --med:#B8951A; --soft:#C53030;
+    --inter:#2F7A1E; --wet:#00567D;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       -webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:var(--blue)}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 22px 80px}
+
+  /* ---- portfolio context · back link + case-study intro card ---- */
+  .portfolio-back{font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+       color:var(--ink-faint);text-decoration:none;display:inline-block;
+       margin-bottom:18px;text-transform:uppercase}
+  .portfolio-back:hover{color:var(--ink)}
+  .intro{display:grid;grid-template-columns:1fr 1.2fr;gap:0;background:var(--panel);
+       border:1px solid var(--line);border-radius:12px;overflow:hidden;
+       margin-bottom:30px;min-height:300px}
+  .intro-vis{background:var(--panel-2);display:flex;align-items:center;justify-content:center;
+       padding:32px;border-right:1px solid var(--line)}
+  .intro-vis svg{width:100%;max-width:320px;height:auto}
+  .intro-txt{padding:32px 36px;display:flex;flex-direction:column;justify-content:center}
+  .intro-tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--amber);
+       text-transform:uppercase;margin-bottom:14px}
+  .intro-h{font-size:32px;font-weight:600;letter-spacing:-.02em;margin:0 0 12px;line-height:1.15;color:var(--ink)}
+  .intro-desc{font-size:14.5px;color:var(--ink-dim);line-height:1.6;margin-bottom:18px;max-width:540px}
+  .intro-bullets{display:flex;flex-direction:column;gap:6px;font-family:var(--mono);
+       font-size:12px;color:var(--ink-dim);line-height:1.5}
+  .intro-bullets > div::before{content:"·";color:var(--amber);margin-right:8px;font-weight:700}
+  @media(max-width:820px){.intro{grid-template-columns:1fr}
+       .intro-vis{min-height:220px;border-right:none;border-bottom:1px solid var(--line)}
+       .intro-txt{padding:24px 22px}.intro-h{font-size:26px}}
+
+  /* ---- status strip (context: where am I, who's running, what's the race state) ---- */
+  .status{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:24px}
+  .status-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .status-row + .status-row{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+  .status-brand{display:flex;align-items:baseline;gap:14px;flex:1;min-width:0}
+  .brand{font-family:var(--mono);font-weight:700;letter-spacing:.14em;font-size:13px;color:var(--ink)}
+  .race-meta{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--ink-dim);text-transform:uppercase}
+  .status-controls{display:flex;align-items:center;gap:10px}
+  .src-badge{font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+       border:1px solid var(--line);border-radius:6px;padding:6px 10px;white-space:nowrap;line-height:1.35}
+  .src-badge b{color:var(--amber)}
+  .src-badge.live b{color:var(--teal)}
+  .theme-toggle{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+       color:var(--ink-faint);background:transparent;border:1px solid var(--line);
+       border-radius:6px;padding:6px 10px;cursor:pointer;line-height:1}
+  .theme-toggle:hover{color:var(--ink);border-color:var(--ink-faint)}
+
+  /* compact driver strip (was a card; now a single row) */
+  .drivers{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .drv{display:flex;align-items:center;gap:10px;flex:1;min-width:220px}
+  .drv.b{justify-content:flex-end;text-align:right}
+  .drv .chip{width:4px;height:24px;border-radius:2px;flex-shrink:0}
+  .drv .nm{font-weight:650;font-size:14.5px;color:var(--ink)}
+  .drv .tm{color:var(--ink-dim);font-size:12px}
+  .drv .lt{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim)}
+  .gap{font-family:var(--mono);text-align:center;padding:0 8px}
+  .gap .v{font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .gap .l{font-size:9.5px;letter-spacing:.14em;color:var(--ink-faint);text-transform:uppercase;display:block;margin-top:1px}
+
+  /* race state line (updates with the slider) */
+  .race-state{font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:.02em;flex:1}
+  .race-state b{color:var(--ink);font-weight:600}
+
+  /* the cockpit · three-column summary. race-time view: read all three in 3s. */
+  .summary{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:14px;margin-bottom:24px}
+  .sum-col{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line);
+       border-radius:8px;padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:14px}
+  .sum-col.lead{border-left-color:var(--amber)}
+  .sum-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink-faint);
+       text-transform:uppercase;display:flex;justify-content:space-between;align-items:baseline}
+  .sum-col.lead .sum-eyebrow{color:var(--amber)}
+  .sum-eyebrow .tag{color:var(--ink-faint);font-size:9px;letter-spacing:.12em}
+  .sum-col.lead .sum-eyebrow .tag{color:var(--amber)}
+  /* context column — driver identity stacked vertically */
+  .ctx-driver{display:flex;gap:9px;align-items:flex-start}
+  .ctx-driver .chip{width:3px;height:36px;border-radius:2px;flex-shrink:0;margin-top:2px}
+  .ctx-driver .info{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .ctx-driver .info .code{font-family:var(--mono);font-weight:700;font-size:14px;color:var(--ink);letter-spacing:.04em}
+  .ctx-driver .info .name{font-size:12px;color:var(--ink-dim)}
+  .ctx-driver .info .quali{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-top:1px}
+  .ctx-gap{font-family:var(--mono);text-align:center;padding:6px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .ctx-gap .v{font-size:18px;font-weight:700;letter-spacing:-.01em;display:block;line-height:1.1}
+  .ctx-gap .l{font-size:9.5px;letter-spacing:.14em;color:var(--ink-faint);text-transform:uppercase;display:block;margin-top:3px}
+  .ctx-race{display:flex;flex-direction:column;gap:5px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim)}
+  .ctx-race .r{display:flex;justify-content:space-between;gap:8px}
+  .ctx-race .r b{color:var(--ink);font-weight:600}
+  /* data column — pace, deg, fit, distilled */
+  .ds-block{display:flex;flex-direction:column;gap:4px}
+  .ds-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--ink-faint);text-transform:uppercase}
+  .ds-row{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);line-height:1.45}
+  .ds-row b{color:var(--ink);font-weight:600}
+  .ds-trend{font-family:var(--mono);font-size:11.5px;color:var(--amber);margin-top:2px}
+  /* forecast column inherits dq-hero / dq-cards styling but scaled */
+  .sum-col .dq-hero{padding:13px 14px;margin-bottom:10px;border-radius:6px}
+  .sum-col .dq-hero-title{font-size:15.5px;line-height:1.3;margin-bottom:4px}
+  .sum-col .dq-hero-why{font-size:12.5px;line-height:1.5}
+  .sum-col .dq-hero-head{margin-bottom:6px;font-size:10px}
+  .sum-col .dq-hero-rec{font-size:11.5px}
+  .sum-col .dq-next-eyebrow{margin:4px 0 6px;font-size:9.5px}
+  .sum-col .dq-card{padding:8px 10px;grid-template-columns:50px 1fr;gap:10px}
+  .sum-col .dq-card .dq-conf{display:none}
+  .sum-col .dq-card .dq-title{font-size:12px}
+  .sum-col .dq-card .dq-why{font-size:11px;line-height:1.4}
+  .sum-col .dq-card .dq-tag .lap{font-size:9.5px}
+  .sum-col .dq-card .dq-tag .rec{font-size:11px}
+  @media(max-width:980px){.summary{grid-template-columns:1fr;gap:10px}}
+
+  /* dig-in collapsible · debrief view, the deep panels live inside */
+  .dig-in{margin-bottom:30px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2)}
+  .dig-in > summary{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+       color:var(--ink-dim);text-transform:uppercase;cursor:pointer;list-style:none;
+       padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+  .dig-in > summary::-webkit-details-marker{display:none}
+  .dig-in > summary:hover{color:var(--ink)}
+  .dig-in > summary::after{content:"+ EXPAND";font-size:10px;color:var(--ink-faint)}
+  .dig-in[open] > summary{color:var(--ink);border-bottom:1px solid var(--line)}
+  .dig-in[open] > summary::after{content:"− COLLAPSE"}
+  .dig-in .dig-body{padding:18px 18px 4px;display:flex;flex-direction:column;gap:24px}
+  .dig-in .dig-body section{margin:0}
+
+  /* a small "forecast" pill the hero uses to declare its nature */
+  .forecast-pill{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+       padding:2px 6px;border-radius:3px;background:rgba(255,183,64,.12);color:var(--amber);
+       border:1px solid rgba(255,183,64,.35);margin-right:8px;text-transform:uppercase;vertical-align:1px}
+
+  /* ---- panels ---- */
+  section{margin-top:30px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink-faint);
+       text-transform:uppercase;margin-bottom:10px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px}
+
+  /* ---- verdict ---- */
+  .verdict-head{font-size:21px;font-weight:600;line-height:1.4;letter-spacing:-.01em}
+  .verdict-head .hl{box-shadow:inset 0 -8px 0 rgba(255,183,64,.18)}
+  .recs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+  .rec{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:14px 15px;border-left:3px solid var(--ink-faint)}
+  .rec .rt{font-weight:650;font-size:13.5px;margin-bottom:5px}
+  .rec .rd{font-size:13px;color:var(--ink-dim)}
+  .rec .tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-faint);text-transform:uppercase;display:block;margin-bottom:7px}
+
+  /* ---- layout grids ---- */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:820px){.two,.recs{grid-template-columns:1fr}.drivers{grid-template-columns:1fr}}
+
+  svg{display:block;width:100%;height:auto}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--ink-dim);margin-top:12px;font-family:var(--mono)}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+  .readout{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);min-height:20px;margin-top:8px}
+  .readout b{color:var(--ink)}
+
+  /* fit rows */
+  .fit-row{margin:14px 0}
+  .fit-row .fl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-dim);margin-bottom:5px}
+  .fit-bar{position:relative;height:14px;background:var(--panel-2);border-radius:4px;display:flex}
+  .fit-bar .a{background:var(--teal);height:100%;border-radius:4px 0 0 4px}
+  .fit-bar .b{background:var(--blue);height:100%;border-radius:0 4px 4px 0;margin-left:auto}
+  .fit-center{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--ink-faint)}
+
+  /* strategy */
+  .stint-track{margin:8px 0 4px}
+  .stint{display:inline-block;height:13px;border-radius:3px;margin-right:2px;vertical-align:middle}
+  .stint-lbl{font-family:var(--mono);font-size:11px;color:var(--ink-dim);width:56px;display:inline-block}
+
+  .note{font-size:12.5px;color:var(--ink-faint);margin-top:10px}
+
+  /* ---- design rationale (collapsible, end-of-page commentary) ---- */
+  .design-notes{margin-top:34px;border-top:1px solid var(--line);padding-top:22px}
+  .design-notes > summary{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+       color:var(--ink-dim);text-transform:uppercase;cursor:pointer;list-style:none;
+       padding:4px 0;display:flex;justify-content:space-between;align-items:center;gap:14px}
+  .design-notes > summary::-webkit-details-marker{display:none}
+  .design-notes > summary:hover{color:var(--ink)}
+  .design-notes > summary::after{content:"+ EXPAND";font-size:10px;color:var(--ink-faint)}
+  .design-notes[open] > summary{color:var(--ink)}
+  .design-notes[open] > summary::after{content:"− COLLAPSE"}
+  .design-notes .dn-body{padding-top:18px;display:grid;gap:24px;
+       color:var(--ink-dim);font-size:13.5px;line-height:1.55}
+  .design-notes .dn-block h4{margin:0 0 6px;color:var(--ink);font-size:13px;
+       font-family:var(--mono);letter-spacing:.06em;font-weight:600}
+  .design-notes .dn-block p{margin:0;max-width:820px}
+  .design-notes .dn-rules{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .design-notes .dn-rule{background:var(--panel-2);border:1px solid var(--line);
+       border-radius:8px;padding:11px 13px;font-size:12.5px;line-height:1.5}
+  .design-notes .dn-rule .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+       color:var(--ink-faint);text-transform:uppercase;display:block;margin-bottom:5px}
+  @media(max-width:640px){.design-notes .dn-rules{grid-template-columns:1fr}}
+
+  .method{margin-top:34px;border-top:1px solid var(--line);padding-top:22px;color:var(--ink-dim);font-size:13px}
+  .method h3{color:var(--ink);font-size:14px;margin:0 0 8px;font-family:var(--mono);letter-spacing:.06em}
+  .method code{font-family:var(--mono);background:var(--panel);padding:2px 6px;border-radius:4px;color:var(--teal);font-size:12px}
+  .foot{margin-top:26px;color:var(--ink-faint);font-size:12px;font-family:var(--mono);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  /* ---- decision queue ---- */
+  .dq-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+  .dq-lap-display{font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:.08em;white-space:nowrap}
+  .dq-lap-display b{color:var(--amber);font-size:17px;font-weight:700}
+  .dq-slider{flex:1;min-width:220px;display:flex;align-items:center}
+  .dq-slider input{width:100%;-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer;height:18px}
+  .dq-slider input:focus{outline:none}
+  .dq-slider input::-webkit-slider-runnable-track{height:4px;background:var(--line);border-radius:2px}
+  .dq-slider input::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--amber);margin-top:-5px;border:none;box-shadow:0 0 0 3px rgba(255,183,64,.18)}
+  .dq-slider input::-moz-range-track{height:4px;background:var(--line);border-radius:2px;border:none}
+  .dq-slider input::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--amber);border:none}
+  .dq-context{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line);letter-spacing:.02em}
+  .dq-context b{color:var(--ink);font-weight:600}
+  /* hero card — the #1 decision gets the dominant treatment. */
+  .dq-hero{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+       padding:18px 22px;border-left:5px solid var(--ink-faint);margin-bottom:14px}
+  .dq-hero-head{display:flex;justify-content:space-between;align-items:baseline;
+       gap:14px;margin-bottom:8px;font-family:var(--mono);font-size:11px;
+       letter-spacing:.12em;color:var(--ink-faint);text-transform:uppercase}
+  .dq-hero-rec{font-size:13px;font-weight:700;letter-spacing:.1em}
+  .dq-hero-title{font-size:21px;font-weight:650;letter-spacing:-.01em;line-height:1.3;margin-bottom:6px;color:var(--ink)}
+  .dq-hero-why{font-size:14px;color:var(--ink-dim);line-height:1.55;max-width:720px}
+  .dq-hero.clear{border-left-color:var(--ink-faint)}
+  .dq-hero.clear .dq-hero-title{color:var(--ink-dim);font-weight:600}
+  .dq-next-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+       color:var(--ink-faint);text-transform:uppercase;margin:6px 0 8px}
+  .dq-cards{display:grid;gap:9px}
+  .dq-card{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:11px 14px;border-left:3px solid var(--ink-faint);
+       display:grid;grid-template-columns:62px 1fr auto;gap:14px;align-items:center}
+  .dq-card .dq-tag{font-family:var(--mono);text-align:center;line-height:1.25}
+  .dq-card .dq-tag .lap{display:block;color:var(--ink-faint);font-size:10px;letter-spacing:.1em}
+  .dq-card .dq-tag .rec{display:block;font-weight:700;font-size:12.5px;letter-spacing:.05em}
+  .dq-card .dq-title{font-weight:650;font-size:13.5px;margin-bottom:3px}
+  .dq-card .dq-why{font-size:12.5px;color:var(--ink-dim);line-height:1.45}
+  .dq-card .dq-conf{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ink-faint);text-align:right;white-space:nowrap}
+  .dq-empty{color:var(--ink-faint);font-size:13px;font-family:var(--mono);text-align:center;padding:18px 10px;letter-spacing:.04em}
+  @media(max-width:640px){.dq-card{grid-template-columns:54px 1fr;gap:10px}.dq-card .dq-conf{grid-column:2;text-align:left}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a href="https://sabahrahman.com" class="portfolio-back">← Sabah Rahman</a>
+
+  <!-- CASE-STUDY INTRO · what this is, sitting above the cockpit -->
+  <section class="intro">
+    <div class="intro-vis">
+      <svg viewBox="0 0 320 280" fill="none" aria-label="Stylized speed-trace overlay with forecast extension">
+        <g stroke="rgba(241,241,243,0.06)" stroke-width="0.75">
+          <line x1="22" y1="78" x2="298" y2="78"/>
+          <line x1="22" y1="138" x2="298" y2="138"/>
+          <line x1="22" y1="198" x2="298" y2="198"/>
+        </g>
+        <line x1="198" y1="62" x2="198" y2="218" stroke="rgba(241,241,243,0.28)" stroke-width="1"/>
+        <text x="202" y="72" font-family="IBM Plex Mono, monospace" font-size="9" fill="rgba(241,241,243,0.55)">@ L12</text>
+        <path d="M22,168 L36,90 L50,180 L64,92 L80,180 L96,90 L112,200 L128,92 L144,180 L160,90 L176,180 L188,92 L198,168"
+              fill="none" stroke="#27F4D2" stroke-width="2" stroke-linecap="round"/>
+        <path d="M22,178 L36,100 L50,188 L64,102 L80,188 L96,100 L112,208 L128,102 L144,188 L160,100 L176,188 L188,102 L198,178"
+              fill="none" stroke="#3671C6" stroke-width="2" stroke-linecap="round"/>
+        <path d="M198,168 L216,160 L234,178 L252,150 L270,168"
+              fill="none" stroke="#27F4D2" stroke-width="1.6" stroke-dasharray="4 4" opacity="0.6"/>
+        <path d="M198,178 L216,170 L234,200 L252,156 L270,178"
+              fill="none" stroke="#3671C6" stroke-width="1.6" stroke-dasharray="4 4" opacity="0.6"/>
+        <circle cx="270" cy="168" r="4.5" fill="#27F4D2" stroke="#161413" stroke-width="1.6"/>
+        <circle cx="270" cy="178" r="4.5" fill="#3671C6" stroke="#161413" stroke-width="1.6"/>
+        <text x="218" y="248" font-family="IBM Plex Mono, monospace" font-size="9" fill="#FFB740" letter-spacing="0.06em">PROJECTED CLIFF</text>
+        <rect x="34" y="232" width="68" height="18" rx="3" fill="rgba(255,183,64,0.12)" stroke="rgba(255,183,64,0.4)"/>
+        <text x="68" y="244" font-family="IBM Plex Mono, monospace" font-size="9" fill="#FFB740" text-anchor="middle" letter-spacing="0.14em">FORECAST</text>
+      </svg>
+    </div>
+    <div class="intro-txt">
+      <div class="intro-tag">For fun · F1 strategy tool · 2026</div>
+      <h1 class="intro-h">Pit Wall</h1>
+      <p class="intro-desc">Race engineer's decision surface. Forecasts when tyres fall off, when undercut windows open, and which call a strategist would make in the next eight laps — derived from FastF1 telemetry, packaged into a cockpit a non-engineer can read in three seconds.</p>
+      <div class="intro-bullets">
+        <div>Three-column cockpit · Context · Data · Forecast — race-time read in 3 seconds</div>
+        <div>Live forecast layer · projected cliff laps + undercut windows from observed laps only</div>
+        <div>FastF1 community palette · warm-dark engineering aesthetic, not SaaS dashboard</div>
+        <div>Sample data ships in-page · scrub the slider below to play the race forward</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATUS · brand + scrubber (the cockpit primary control) -->
+  <header class="status">
+    <div class="status-row">
+      <div class="status-brand">
+        <span class="brand">▟ PIT WALL</span>
+        <span class="race-meta" id="raceMeta">—</span>
+      </div>
+      <div class="status-controls">
+        <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle light/dark theme">☼ LIGHT</button>
+        <div id="srcBadge" class="src-badge">DATA: <b>SAMPLE</b><br><span style="color:var(--ink-faint)">representative — not live timing</span></div>
+      </div>
+    </div>
+    <div class="status-row">
+      <div class="dq-lap-display">@ LAP <b id="dqLap">—</b> / <span id="dqTotal">—</span></div>
+      <div class="dq-slider"><input type="range" id="dqSlider" min="1" max="58" value="12" step="1" /></div>
+    </div>
+  </header>
+
+  <!-- COCKPIT · three summaries at a glance · read in 3 seconds -->
+  <div class="summary">
+    <div class="sum-col">
+      <div class="sum-eyebrow"><span>1 · Context</span><span class="tag">where we are</span></div>
+      <div id="ctxBlock"></div>
+    </div>
+    <div class="sum-col">
+      <div class="sum-eyebrow"><span>2 · Data</span><span class="tag">what's happening</span></div>
+      <div id="dataSummary"></div>
+    </div>
+    <div class="sum-col lead">
+      <div class="sum-eyebrow"><span>3 · Forecast</span><span class="tag">the call · wedge</span></div>
+      <div id="dqHero"></div>
+      <div id="dqNext"></div>
+    </div>
+  </div>
+
+  <!-- DIG IN · debrief view · all the deep panels, collapsed by default -->
+  <details class="dig-in">
+    <summary><span>↓ Dig in · debrief view · pace chart, track map, corner fit, telemetry, qualifying read</span></summary>
+    <div class="dig-body">
+
+      <section>
+        <div class="eyebrow">Race · stints, pace &amp; forecast</div>
+        <div class="panel" id="strategyPanel">
+          <div id="stints"></div>
+          <svg id="paceSvg" viewBox="0 0 1000 240" aria-label="Lap pace over the race"></svg>
+          <div class="legend"><span style="color:var(--ink-faint)">lap time (s) per lap · lower is faster · forecast extension dashed · safety-car laps spike</span></div>
+        </div>
+      </section>
+
+      <div class="two">
+        <section>
+          <div class="eyebrow">Where the gap is won &amp; lost · qualifying</div>
+          <div class="panel">
+            <svg id="trackSvg" viewBox="0 0 500 360" aria-label="Track map coloured by who is faster"></svg>
+            <div class="legend">
+              <span><i style="background:var(--teal)"></i><span id="legA">Driver A</span> faster</span>
+              <span><i style="background:var(--blue)"></i><span id="legB">Driver B</span> faster</span>
+            </div>
+            <div class="readout" id="trackReadout">Hover the speed trace to scrub the lap.</div>
+          </div>
+        </section>
+
+        <section>
+          <div class="eyebrow">Driver–car fit · by corner family</div>
+          <div class="panel">
+            <div id="fit"></div>
+            <div class="note" id="fitNote"></div>
+          </div>
+        </section>
+      </div>
+
+      <section>
+        <div class="eyebrow">Hot-lap telemetry · overlaid</div>
+        <div class="panel">
+          <svg id="telSvg" viewBox="0 0 1000 360" aria-label="Speed, throttle and brake telemetry"></svg>
+          <div class="legend">
+            <span><i style="background:var(--teal)"></i><span id="legA2">A</span></span>
+            <span><i style="background:var(--blue)"></i><span id="legB2">B</span></span>
+            <span style="color:var(--ink-faint)">— speed (km/h) · throttle · brake · running gap below</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="eyebrow">Qualifying · setup read</div>
+        <div class="panel">
+          <div class="verdict-head" id="verdict"></div>
+          <div class="recs" id="recs"></div>
+        </div>
+      </section>
+
+    </div>
+  </details>
+
+  <!-- DESIGN RATIONALE · collapsible commentary, default closed -->
+  <details class="design-notes">
+    <summary>DESIGN RATIONALE · why this looks the way it does</summary>
+    <div class="dn-body">
+
+      <div class="dn-block">
+        <h4>PAGE FLOW · CONTEXT → DATA → DECISION</h4>
+        <p>Real pit-wall flow isn't "recommendation up top, evidence below." A team principal won't
+          trust a call they haven't already half-formed in their head from the data. The page reads
+          top-down as: <b>where am I</b> (status strip) → <b>what's the evidence</b> (race pace, stints,
+          qualifying read) → <b>what's the call</b> (the hero card at the bottom). The recommendation
+          lands as confirmation, not ambush.</p>
+      </div>
+
+      <div class="dn-block">
+        <h4>COLOR · THREE SEMANTIC CHANNELS, NO OVERLAP</h4>
+        <p>Each channel serves one purpose so the eye learns the mapping after one card. Hue
+          separation matters most for the two drivers — they share the same panel and overlay
+          each other on every chart.</p>
+        <div class="dn-rules">
+          <div class="dn-rule"><span class="lbl">Qualitative · entities</span>Teal ↔ indigo for the
+            drivers. Mercedes brand teal stays teal; Red Bull's brand blue shifts to indigo because
+            pure cobalt and teal occupy the same hue lane and read as one color when overlaid.</div>
+          <div class="dn-rule"><span class="lbl">Sequential · urgency</span>Red → amber → faint gray.
+            PIT &gt; WATCH &gt; PREP. Lightness and hue ramp together so colorblind viewers still
+            see the gradient.</div>
+          <div class="dn-rule"><span class="lbl">Neutral · context</span>Mute gray for "no winner"
+            segments, ghosted forecast paths, dim labels. Anything that isn't an emphasised signal.</div>
+          <div class="dn-rule"><span class="lbl">One amber, not two</span>Slider thumb, event markers,
+            mid-urgency cards, verdict highlight — all share one warm hue. The rule is "no two
+            same-hue colors with different meanings."</div>
+        </div>
+      </div>
+
+      <div class="dn-block">
+        <h4>LIGHT + DARK · BOTH SHIP</h4>
+        <p>Dark mode wins on saturation-heavy displays in dim rooms (Bloomberg, mission control).
+          Light mode wins on sustained reading of dense prose — relevant for the recommendation
+          "why" lines. The toggle persists via localStorage. Driver brand colors blend 45% toward
+          black in light mode because the bright teal that pops on near-black washes out on
+          near-white. The HARD-tyre swatch flips from FIA-white to dark gray on white backgrounds
+          for the same reason.</p>
+      </div>
+
+      <div class="dn-block">
+        <h4>ONE DOMINANT CALL · NOT THREE EQUAL CARDS</h4>
+        <p>The Decision Queue sorts by urgency. The #1 item gets the hero treatment — large title,
+          dominant accent border, max contrast. The rest stack under "Next up" with smaller cards.
+          Three equal-sized cards force the user to read all three; one hero delivers the answer
+          in a single glance, with secondary calls available without competing for attention.</p>
+      </div>
+
+      <div class="dn-block">
+        <h4>WHAT THIS PRODUCT REFUSED TO DO</h4>
+        <div class="dn-rules">
+          <div class="dn-rule"><span class="lbl">No rainbow</span>Color earns its meaning. Most
+            things are gray; vivid hues are reserved for signal.</div>
+          <div class="dn-rule"><span class="lbl">No red/green for drivers</span>Colorblind-hostile.
+            The two main entities are always teal ↔ indigo.</div>
+          <div class="dn-rule"><span class="lbl">No marketing copy above the fold</span>The product
+            describes itself. The pitch lives in the methodology block below.</div>
+          <div class="dn-rule"><span class="lbl">No alerts for noise</span>Decision cards only fire
+            when the underlying math crosses a real threshold — undercut window opens only when
+            stint timing makes it strategically real, cliff alerts only when projected degradation
+            crosses +1.5s of stint baseline.</div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- METHODOLOGY / HONESTY -->
+  <div class="method">
+    <h3>HOW THIS WORKS &amp; WHAT'S REAL</h3>
+    <p>Most tools show you <em>what</em> happened on a lap. This one explains <em>why</em> a
+      car–driver pairing is fast or slow — the corner families a setup rewards, where the lap
+      time actually lives, and what to do about it. Built to be read in 30 seconds by someone
+      who has to make a call.</p>
+    <p id="methodSample">This page is currently showing <b>representative sample data</b> for a
+      Hamilton (Mercedes) vs Verstappen (Red Bull) style head-to-head — generated to demonstrate the
+      product, <b>not</b> real timing data. Nothing here should be read as actual F1 telemetry yet.</p>
+    <p>To load the genuine article, run the included pipeline on your own machine (where the F1 timing
+      API is reachable) and drop the result next to this file:</p>
+    <p><code>pip install fastf1</code> &nbsp;→&nbsp; <code>python fetch_race_data.py --year 2021 --gp "Abu Dhabi Grand Prix" --a HAM --b VER</code></p>
+    <p>That writes <code>race_data.json</code>. Reload this page (served over http, or locally via
+      <code>python -m http.server</code>) and the badge flips to <b style="color:var(--teal)">LIVE</b>,
+      every panel re-renders from the real lap. Corner pace, the track delta map, and the fit profile
+      are computed directly from telemetry; the written verdict is a transparent heuristic over those
+      measured deltas — labelled as inference, never dressed up as fact.</p>
+  </div>
+
+  <div class="foot">
+    <span>PIT WALL · decision surface · demo build</span>
+    <span>data via FastF1 (when live) · <a href="https://sabahrahman.com" style="color:inherit;text-decoration:underline;text-underline-offset:3px">© 2026 Sabah Rahman</a></span>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+/* ============================================================================
+   Pit Wall — single-file decision surface.
+   On load: try to fetch race_data.json (real data from fetch_race_data.py).
+   If unavailable, synthesise clearly-labelled SAMPLE data so the product is
+   always viewable. All rendering is hand-rolled SVG — no chart dependencies.
+   ========================================================================== */
+
+const NPTS = 600, LAP_LEN = 5281; // metres (Yas-Marina-ish)
+
+/* deterministic PRNG so the sample is identical every load */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+/* ---- corner definitions for the sample lap (apex distance, base min speed) ---- */
+const SAMPLE_CORNERS = [
+  {n:1, apex:1000, type:"low",    base:96 },
+  {n:2, apex:1260, type:"low",    base:112},
+  {n:3, apex:2050, type:"medium", base:178},
+  {n:4, apex:2580, type:"low",    base:88 },
+  {n:5, apex:3240, type:"high",   base:252},
+  {n:6, apex:3760, type:"medium", base:162},
+  {n:7, apex:4240, type:"low",    base:104},
+  {n:8, apex:4680, type:"medium", base:188},
+  {n:9, apex:5060, type:"low",    base:122},
+];
+/* the thesis, encoded: A(Merc) owns medium/high flow; B(RB) owns low-speed
+   traction + straight-line. Per-corner min-speed deltas (km/h, +ve = faster). */
+const FIT_BIAS = {low:{A:-1,B:+2}, medium:{A:+3,B:-1}, high:{A:+4,B:-1}};
+const TOP_A = 321.5, TOP_B = 322;           // Red Bull a touch faster in a straight line
+
+function speedAt(d, driver){
+  const top = driver==="A"?TOP_A:TOP_B;
+  let v = top;
+  for(const c of SAMPLE_CORNERS){
+    const mn = c.base + (FIT_BIAS[c.type][driver]||0);
+    const dd = Math.abs(d - c.apex);
+    const zone = (d < c.apex) ? 180 : 430;   // brake hard, accelerate gently
+    const cv = mn + (top - mn) * Math.min(dd/zone, 1);
+    if(cv < v) v = cv;
+  }
+  return v;
+}
+
+/* synthesise the full SAMPLE dataset, internally consistent (delta derived
+   from the two speed traces, so the track map and the gap agree). */
+function buildSample(){
+  const grid=[], A={speed:[],throttle:[],brake:[],gear:[]}, B={speed:[],throttle:[],brake:[],gear:[]};
+  for(let i=0;i<NPTS;i++) grid.push(i/(NPTS-1)*LAP_LEN);
+  const deriveChans=(arr,obj)=>{
+    for(let i=0;i<NPTS;i++){
+      const v=arr[i], pv=arr[Math.max(0,i-1)], dv=v-pv;
+      obj.speed.push(+v.toFixed(1));
+      obj.throttle.push(dv>0.4?100:(dv<-0.6?0:62));
+      obj.brake.push(dv<-1.2?1:0);
+      obj.gear.push(Math.max(1,Math.min(8,Math.round(v/42)+1)));
+    }
+  };
+  const rawA=grid.map(d=>speedAt(d,"A")), rawB=grid.map(d=>speedAt(d,"B"));
+  deriveChans(rawA,A); deriveChans(rawB,B);
+
+  // running time + delta (seconds), B relative to A
+  const ds = LAP_LEN/(NPTS-1); let tA=0,tB=0; const delta=[];
+  for(let i=0;i<NPTS;i++){
+    tA += ds/Math.max(rawA[i]/3.6, 5);
+    tB += ds/Math.max(rawB[i]/3.6, 5);
+    delta.push(tB - tA);
+  }
+  const lapA=tA, lapB=tB;
+
+  // track map: stylised closed loop, "faster" from delta slope
+  const track = buildTrackXY(grid, delta);
+
+  // per-corner pace + classification
+  const corners = SAMPLE_CORNERS.map(c=>{
+    const win = grid.map((d,i)=>Math.abs(d-c.apex)<120?i:-1).filter(i=>i>=0);
+    const minA=Math.min(...win.map(i=>rawA[i])), minB=Math.min(...win.map(i=>rawB[i]));
+    return {num:c.n,type:c.type,minSpeedA:+minA.toFixed(1),minSpeedB:+minB.toFixed(1),
+            faster:minA>minB?"A":"B",speedGap:+Math.abs(minA-minB).toFixed(1)};
+  });
+  const fit = buildFit(corners);
+  const strategy = buildSampleStrategy();
+  const verdict = buildVerdict(fit, lapB-lapA);
+
+  return {
+    meta:{race:"Abu Dhabi Grand Prix (sample)",year:2021,telSession:"Q",dataSource:"SAMPLE",
+      driverA:{code:"HAM",name:"Lewis Hamilton",team:"Mercedes",color:"#27F4D2",lapTime:+lapA.toFixed(3),compound:"SOFT"},
+      driverB:{code:"VER",name:"Max Verstappen",team:"Red Bull",color:"#3671C6",lapTime:+lapB.toFixed(3),compound:"SOFT"}},
+    telemetry:{distance:grid,A,B,delta}, trackMap:track, corners, fitProfile:fit,
+    strategy, verdict
+  };
+}
+
+function buildTrackXY(grid, delta){
+  // hand-crafted waypoints → a believable circuit silhouette
+  const wp=[[70,250],[150,250],[250,248],[360,250],[430,235],[455,195],[440,160],[385,150],
+            [330,165],[300,140],[320,95],[380,80],[440,90],[470,130],[470,300],[420,330],
+            [300,330],[180,328],[110,320],[70,290],[70,250]];
+  // cumulative length of the polyline
+  const seg=[]; let total=0;
+  for(let i=0;i<wp.length-1;i++){const dx=wp[i+1][0]-wp[i][0],dy=wp[i+1][1]-wp[i][1];
+    const L=Math.hypot(dx,dy); seg.push({a:wp[i],b:wp[i+1],L,acc:total}); total+=L;}
+  const at=u=>{ // u in [0,1] → x,y along polyline
+    let target=u*total; for(const s of seg){ if(target<=s.acc+s.L){const t=(target-s.acc)/s.L;
+      return [s.a[0]+(s.b[0]-s.a[0])*t, s.a[1]+(s.b[1]-s.a[1])*t];}}
+    return wp[wp.length-1];
+  };
+  const pts=[];
+  for(let i=0;i<NPTS;i++){
+    const [x,y]=at(grid[i]/LAP_LEN);
+    let faster=null;
+    if(i>0 && delta) faster = (delta[i]<delta[i-1])?"B":"A"; // gap to A shrinking ⇒ B quicker here
+    pts.push({x,y,dist:grid[i],faster});
+  }
+  return pts;
+}
+
+function buildFit(corners){
+  const agg={low:[0,0],medium:[0,0],high:[0,0]};
+  corners.forEach(c=>{agg[c.type][c.faster==="A"?0:1]+=c.speedGap;});
+  const lbl={low:"Low-speed traction",medium:"Medium-speed balance",high:"High-speed commitment"};
+  return Object.keys(agg).map(k=>({archetype:lbl[k],key:k,
+    aScore:+agg[k][0].toFixed(1),bScore:+agg[k][1].toFixed(1)}));
+}
+
+function buildSampleStrategy(){
+  const rnd=mulberry32(7); const LAPS=58; const A={pace:[],stints:[]},B={pace:[],stints:[]};
+  const mk=(driver,plan)=>{ // plan: [{compound,start,end,base,deg}]
+    plan.forEach(p=>driver.stints.push({compound:p.compound,start:p.start,end:p.end}));
+    for(let lap=1;lap<=LAPS;lap++){
+      const p=plan.find(s=>lap>=s.start&&lap<=s.end)||plan[plan.length-1];
+      const age=lap-p.start;
+      let t=p.base + age*p.deg - lap*0.05 + (rnd()-0.5)*0.4; // tyre deg, fuel burn, noise
+      if(lap>=53&&lap<=55) t+=42;                            // safety-car window
+      driver.pace.push(+t.toFixed(2));
+    }
+  };
+  mk(A,[{compound:"MEDIUM",start:1,end:13,base:99.2,deg:0.14},
+        {compound:"HARD",start:14,end:58,base:99.8,deg:0.085}]);
+  mk(B,[{compound:"MEDIUM",start:1,end:13,base:99.0,deg:0.14},
+        {compound:"HARD",start:14,end:52,base:99.6,deg:0.08},
+        {compound:"SOFT",start:53,end:58,base:97.9,deg:0.16}]);
+  return {A,B,events:[{lap:53,type:"SC",text:"Safety car — late stop"}]};
+}
+
+function buildVerdict(fit, gap){
+  const strongest=(key)=>{const r=[...fit].sort((a,b)=>b[key]-a[key]);return r[0].archetype;};
+  const sA=strongest("aScore"), sB=strongest("bScore");
+  return {
+    headline:`The cars are separated by setup philosophy, not driver ceiling: each is quickest in a different corner family, and that is where the lap is being decided.`,
+    lapGap:+gap.toFixed(3), strengthA:sA, strengthB:sB,
+    recommendations:[
+      {target:"team",title:"Where the lap time lives",
+       detail:`A is strongest in ${sA.toLowerCase()}; B in ${sB.toLowerCase()}. Closing the deficit is a balance move toward the weaker family — not more wing.`},
+      {target:"A",title:"Hamilton — protect the strength",
+       detail:`The ${sA.toLowerCase()} advantage is the anchor of the lap. Don't trade it chasing straight-line speed.`},
+      {target:"B",title:"Verstappen — the recoverable time",
+       detail:`The loss is concentrated outside ${sB.toLowerCase()} — a setup conversation, not a limit of the driver.`}
+    ]
+  };
+}
+
+/* ----------------------------- RENDERING --------------------------------- */
+const $=id=>document.getElementById(id);
+const SVGNS="http://www.w3.org/2000/svg";
+function el(tag,attrs){const e=document.createElementNS(SVGNS,tag);
+  for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+
+/* theme — resolve CSS tokens at render time so SVG setAttribute (which can't
+   read var()) still gets the right literals. Re-runs per render so theme
+   flips take effect immediately. */
+function isLight(){return document.documentElement.getAttribute("data-theme")==="light";}
+function resolveTheme(){
+  const cs=getComputedStyle(document.documentElement);
+  const g=k=>cs.getPropertyValue(k).trim();
+  return {bg:g("--bg"),panel:g("--panel"),line:g("--line"),
+    ink:g("--ink"),inkDim:g("--ink-dim"),inkFaint:g("--ink-faint"),
+    amber:g("--amber"),red:g("--red"),mute:g("--mute")};
+}
+/* darken brand colors for light bg — they were picked for near-black surfaces */
+function themedDriverColor(hex){
+  if(!isLight())return hex;
+  const m=/^#([0-9a-f]{6})$/i.exec(hex); if(!m)return hex;
+  const n=parseInt(m[1],16);
+  const r=(n>>16)&0xff, g=(n>>8)&0xff, b=n&0xff;
+  const mix=c=>Math.round(c*0.55); // 45% toward black
+  const out=(mix(r)<<16)|(mix(g)<<8)|mix(b);
+  return "#"+out.toString(16).padStart(6,"0");
+}
+
+const THEME_KEY="pitwall.theme";
+function getStoredTheme(){try{return localStorage.getItem(THEME_KEY)||"dark";}catch{return "dark";}}
+function setTheme(name){
+  document.documentElement.setAttribute("data-theme",name);
+  try{localStorage.setItem(THEME_KEY,name);}catch{}
+  const btn=$("themeToggle");
+  if(btn)btn.textContent=name==="dark"?"☼ LIGHT":"☾ DARK";
+  if(DATA)render(DATA); // re-bake SVGs since literal colors are inlined
+}
+
+let DATA=null, COL_A="#27F4D2", COL_B="#3671C6";
+
+function render(d){
+  DATA=d;
+  COL_A=themedDriverColor(d.meta.driverA.color||"#27F4D2");
+  COL_B=themedDriverColor(d.meta.driverB.color||"#3671C6");
+  document.documentElement.style.setProperty("--teal",COL_A);
+  document.documentElement.style.setProperty("--blue",COL_B);
+
+  // source badge + race meta in the status strip
+  const live=d.meta.dataSource==="LIVE";
+  $("srcBadge").className="src-badge"+(live?" live":"");
+  $("srcBadge").innerHTML = live
+    ? `DATA: <b>LIVE</b><br><span style="color:var(--ink-faint)">via FastF1</span>`
+    : `DATA: <b>SAMPLE</b><br><span style="color:var(--ink-faint)">representative — not live timing</span>`;
+  if(live) $("methodSample").style.display="none";
+  $("raceMeta").textContent = `${d.meta.year} · ${d.meta.race.replace(/\s*\(sample\)\s*$/i,"")} · ${d.meta.driverA.code} vs ${d.meta.driverB.code}`;
+
+  renderVerdict(d); renderTrack(d);
+  renderFit(d); renderTelemetry(d);
+  setupSlider(d);
+  const initialLap = d.strategy ? +$("dqSlider").value : null;
+  renderContextSummary(d, initialLap);
+  renderDataSummary(d, initialLap);
+  renderStrategy(d, initialLap);
+  if(d.strategy) renderDecisionQueue(d, initialLap);
+  ["legA","legA2"].forEach(i=>$(i).textContent=d.meta.driverA.code);
+  ["legB","legB2"].forEach(i=>$(i).textContent=d.meta.driverB.code);
+}
+
+function fmtLap(s){if(s==null)return"—";const m=Math.floor(s/60);const r=(s-m*60);
+  return m>0?`${m}:${r.toFixed(3).padStart(6,"0")}`:r.toFixed(3);}
+
+// CONTEXT column — drivers stacked vertically + race state if available
+function renderContextSummary(d, atLap){
+  const a=d.meta.driverA, b=d.meta.driverB, gap=d.verdict?.lapGap;
+  const quicker=(gap==null||gap>=0)?"A":"B";
+
+  let raceState="";
+  if(d.strategy && atLap!=null){
+    const totalLaps=Math.max(d.strategy.A.pace.length,d.strategy.B.pace.length);
+    const stintLabel=(label)=>{const s=(d.strategy[label].stints||[]).find(st=>atLap>=st.start&&atLap<=st.end);
+      return s?`${s.compound} L${atLap-s.start+1}`:"—";};
+    let cumGap=0;
+    for(let i=0;i<atLap;i++){
+      const ap=d.strategy.A.pace[i], bp=d.strategy.B.pace[i];
+      if(ap!=null&&bp!=null)cumGap+=bp-ap;
+    }
+    const lead=cumGap>0?"A":"B", absG=Math.abs(cumGap);
+    raceState=`
+      <div class="ctx-race">
+        <div class="r"><span>Lap</span><b>${atLap} / ${totalLaps}</b></div>
+        <div class="r"><span>${a.code} stint</span><b>${stintLabel("A")}</b></div>
+        <div class="r"><span>${b.code} stint</span><b>${stintLabel("B")}</b></div>
+        <div class="r"><span>Race gap</span><b>${d.meta["driver"+lead].code} +${absG.toFixed(1)}s</b></div>
+      </div>`;
+  }
+
+  $("ctxBlock").innerHTML=`
+    <div class="ctx-driver">
+      <span class="chip" style="background:${COL_A}"></span>
+      <span class="info">
+        <span class="code">${a.code}</span>
+        <span class="name">${a.name} · ${a.team}</span>
+        <span class="quali">Q ${fmtLap(a.lapTime)}</span>
+      </span>
+    </div>
+    <div class="ctx-gap">
+      <span class="v" style="color:${quicker==="A"?COL_A:COL_B}">${gap==null?"—":(gap>=0?"+":"")+gap.toFixed(3)}</span>
+      <span class="l">quali gap</span>
+    </div>
+    <div class="ctx-driver">
+      <span class="chip" style="background:${COL_B}"></span>
+      <span class="info">
+        <span class="code">${b.code}</span>
+        <span class="name">${b.name} · ${b.team}</span>
+        <span class="quali">Q ${fmtLap(b.lapTime)}</span>
+      </span>
+    </div>
+    ${raceState}
+  `;
+}
+
+function renderVerdict(d){
+  $("verdict").innerHTML = d.verdict.headline.replace(/(corner family|setup philosophy)/,
+    '<span class="hl">$1</span>');
+  const border={team:"var(--amber)",A:COL_A,B:COL_B};
+  $("recs").innerHTML=d.verdict.recommendations.map(r=>`
+    <div class="rec" style="border-left-color:${border[r.target]||'var(--ink-faint)'}">
+      <span class="tag">${r.target==="team"?"TEAM CALL":d.meta["driver"+r.target].code}</span>
+      <div class="rt">${r.title}</div><div class="rd">${r.detail}</div></div>`).join("");
+}
+
+function renderTrack(d){
+  const T=resolveTheme();
+  const svg=$("trackSvg"); svg.innerHTML="";
+  const xs=d.trackMap.map(p=>p.x), ys=d.trackMap.map(p=>p.y);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  const pad=30,W=500,H=360, sx=(W-2*pad)/(maxX-minX), sy=(H-2*pad)/(maxY-minY), s=Math.min(sx,sy);
+  const X=x=>pad+(x-minX)*s, Y=y=>pad+(y-minY)*s;
+  // coloured segments
+  d.trackMap.forEach((p,i)=>{ if(i===0)return; const q=d.trackMap[i-1];
+    const col=p.faster==="A"?COL_A:(p.faster==="B"?COL_B:T.mute);
+    svg.appendChild(el("line",{x1:X(q.x),y1:Y(q.y),x2:X(p.x),y2:Y(p.y),
+      stroke:col,"stroke-width":7,"stroke-linecap":"round",opacity:.92}));
+  });
+  // scrub marker — ink dot ringed in bg for contrast against any segment color
+  const mk=el("circle",{r:6,fill:T.ink,stroke:T.bg,"stroke-width":2,opacity:0,id:"trackMarker"});
+  svg.appendChild(mk);
+}
+
+function renderFit(d){
+  const max=Math.max(1,...d.fitProfile.flatMap(f=>[f.aScore,f.bScore]));
+  $("fit").innerHTML=d.fitProfile.map(f=>{
+    const aw=(f.aScore/max)*50, bw=(f.bScore/max)*50;
+    return `<div class="fit-row">
+      <div class="fl"><span>${d.meta.driverA.code} +${f.aScore}</span>
+        <b style="color:var(--ink)">${f.archetype}</b><span>+${f.bScore} ${d.meta.driverB.code}</span></div>
+      <div class="fit-bar"><div class="a" style="width:${aw}%"></div>
+        <div class="fit-center"></div><div class="b" style="width:${bw}%"></div></div></div>`;
+  }).join("");
+  $("fitNote").innerHTML=`Each bar is the cumulative cornering-speed advantage that car–driver
+    pairing holds in that corner family. A wide split toward one side is the signature of a setup
+    tuned to a driving style — exactly the "only one driver makes this car sing" effect.`;
+}
+
+function renderTelemetry(d){
+  const T=resolveTheme();
+  const svg=$("telSvg"); svg.innerHTML=""; const W=1000,H=360;
+  const dist=d.telemetry.distance, n=dist.length, maxD=dist[n-1];
+  const X=dd=>(dd/maxD)*W;
+  const speedTop=80, speedBot=210, sMax=330;
+  const Yspd=v=>speedBot-(v/sMax)*(speedBot-speedTop);
+  // grid lines
+  [100,200,300].forEach(v=>{svg.appendChild(el("line",{x1:0,y1:Yspd(v),x2:W,y2:Yspd(v),
+    stroke:T.line,"stroke-width":1}));
+    svg.appendChild(el("text",{x:4,y:Yspd(v)-3,fill:T.inkFaint,"font-size":11,"font-family":"monospace"})).textContent=v+"";});
+  const path=(arr,yf,col,wd)=>{let dd="M";for(let i=0;i<n;i++)dd+=`${X(dist[i]).toFixed(1)},${yf(arr[i]).toFixed(1)} `;
+    svg.appendChild(el("path",{d:dd.replace(/ /g," L").replace("M L","M"),fill:"none",stroke:col,"stroke-width":wd,opacity:.95}));};
+  path(d.telemetry.A.speed,Yspd,COL_A,2);
+  path(d.telemetry.B.speed,Yspd,COL_B,2);
+  // throttle/brake band
+  const thrTop=224,thrBot=276, Ythr=v=>thrBot-(v/100)*(thrBot-thrTop);
+  svg.appendChild(el("text",{x:4,y:thrTop-2,fill:T.inkFaint,"font-size":10,"font-family":"monospace"})).textContent="THROTTLE";
+  path(d.telemetry.A.throttle,Ythr,COL_A,1.4); path(d.telemetry.B.throttle,Ythr,COL_B,1.4);
+  // delta
+  const dl=d.telemetry.delta;
+  if(dl && dl.some(v=>v!=null)){
+    const dmax=Math.max(...dl.map(v=>Math.abs(v||0)),0.1);
+    const dTop=290,dBot=350,dMid=(dTop+dBot)/2, Yd=v=>dMid-(v/dmax)*((dBot-dTop)/2);
+    svg.appendChild(el("line",{x1:0,y1:dMid,x2:W,y2:dMid,stroke:T.line,"stroke-width":1}));
+    svg.appendChild(el("text",{x:4,y:dTop-2,fill:T.inkFaint,"font-size":10,"font-family":"monospace"})).textContent="GAP (B−A) s";
+    let dd="M";for(let i=0;i<n;i++)dd+=`${X(dist[i]).toFixed(1)},${Yd(dl[i]||0).toFixed(1)} `;
+    svg.appendChild(el("path",{d:dd.replace(/ /g," L").replace("M L","M"),fill:"none",stroke:T.amber,"stroke-width":1.6,opacity:.9}));
+  }
+  // scrubber — ink color so it shows on either bg
+  const scrub=el("line",{x1:0,y1:60,x2:0,y2:H,stroke:T.ink,"stroke-width":1,opacity:0,id:"scrub"});
+  svg.appendChild(scrub);
+  const overlay=el("rect",{x:0,y:0,width:W,height:H,fill:"transparent"});
+  svg.appendChild(overlay);
+  const onMove=ev=>{
+    const r=svg.getBoundingClientRect();
+    const px=(ev.clientX-r.left)/r.width*W; const idx=Math.max(0,Math.min(n-1,Math.round(px/W*(n-1))));
+    scrub.setAttribute("x1",X(dist[idx]));scrub.setAttribute("x2",X(dist[idx]));scrub.setAttribute("opacity",.6);
+    const sa=d.telemetry.A.speed[idx],sb=d.telemetry.B.speed[idx],dv=dl?dl[idx]:null;
+    $("trackReadout").innerHTML=`@ ${Math.round(dist[idx])}m &nbsp; `+
+      `<b style="color:${COL_A}">${d.meta.driverA.code} ${Math.round(sa)}</b> &nbsp;`+
+      `<b style="color:${COL_B}">${d.meta.driverB.code} ${Math.round(sb)}</b> km/h`+
+      (dv!=null?` &nbsp; gap <b>${dv>=0?"+":""}${dv.toFixed(3)}s</b>`:"");
+    // move track marker
+    const tm=$("trackMarker"); if(tm){const tp=DATA.trackMap[Math.min(idx,DATA.trackMap.length-1)];
+      const tsvg=$("trackSvg"); // recompute transform
+      const xs=DATA.trackMap.map(p=>p.x),ys=DATA.trackMap.map(p=>p.y);
+      const mnX=Math.min(...xs),mxX=Math.max(...xs),mnY=Math.min(...ys),mxY=Math.max(...ys);
+      const pad=30,Wt=500,Ht=360,sc=Math.min((Wt-2*pad)/(mxX-mnX),(Ht-2*pad)/(mxY-mnY));
+      tm.setAttribute("cx",pad+(tp.x-mnX)*sc);tm.setAttribute("cy",pad+(tp.y-mnY)*sc);tm.setAttribute("opacity",1);}
+  };
+  overlay.addEventListener("mousemove",onMove);
+  overlay.addEventListener("mouseleave",()=>{scrub.setAttribute("opacity",0);
+    const tm=$("trackMarker");if(tm)tm.setAttribute("opacity",0);
+    $("trackReadout").textContent="Hover the speed trace to scrub the lap.";});
+}
+
+const COMP_COL={SOFT:"var(--soft)",MEDIUM:"var(--med)",HARD:"var(--hard)",INTERMEDIATE:"var(--inter)",WET:"var(--wet)"};
+function renderStrategy(d, atLap){
+  const T=resolveTheme();
+  if(!d.strategy){$("stints").innerHTML='<div class="note">No race-strategy data in this dataset.</div>';
+    $("paceSvg").style.display="none";return;}
+  const totalLaps=Math.max(d.strategy.A.pace.length,d.strategy.B.pace.length)||1;
+  const row=(code,st)=>{ let h=`<div style="margin:6px 0"><span class="stint-lbl">${code}</span>`;
+    (st.stints||[]).forEach(s=>{const w=((s.end-s.start+1)/totalLaps)*100;
+      h+=`<span class="stint" title="${s.compound} · L${s.start}-${s.end}"
+        style="width:${w}%;background:${COMP_COL[s.compound]||'#888'}"></span>`;});
+    return h+"</div>";};
+  $("stints").innerHTML='<div class="stint-track">'+
+    row(d.meta.driverA.code,d.strategy.A)+row(d.meta.driverB.code,d.strategy.B)+'</div>'+
+    '<div class="legend">'+Object.keys(COMP_COL).slice(0,3).map(k=>
+      `<span><i style="background:${COMP_COL[k]}"></i>${k}</span>`).join("")+'</div>';
+  // pace chart
+  const svg=$("paceSvg");svg.style.display="";svg.innerHTML="";const W=1000,H=240,pad=30;
+  const all=[...d.strategy.A.pace,...d.strategy.B.pace].filter(v=>v!=null);
+  const lo=Math.min(...all),hi=Math.min(Math.max(...all),lo+60); // clamp SC spike for scale
+  const X=l=>pad+(l/(totalLaps-1))*(W-2*pad), Y=t=>H-pad-((Math.min(t,hi)-lo)/(hi-lo))*(H-2*pad);
+  const line=(pace,col,toLap)=>{let dd="M",started=false;
+    pace.forEach((t,i)=>{ if(t==null)return; if(toLap!=null && (i+1)>toLap)return;
+      dd+=(started?" L":"")+`${X(i).toFixed(1)},${Y(t).toFixed(1)}`;started=true;});
+    svg.appendChild(el("path",{d:dd,fill:"none",stroke:col,"stroke-width":1.8,opacity:.92}));};
+  // when scrubbing, draw observed pace bright up to atLap, faded past it
+  if(atLap){
+    const ghost=(pace,col)=>{let dd="M",started=false;
+      pace.forEach((t,i)=>{if(t==null)return;if((i+1)<atLap)return;
+        dd+=(started?" L":"")+`${X(i).toFixed(1)},${Y(t).toFixed(1)}`;started=true;});
+      svg.appendChild(el("path",{d:dd,fill:"none",stroke:col,"stroke-width":1.2,opacity:.18,"stroke-dasharray":"2 3"}));};
+    ghost(d.strategy.A.pace,COL_A); ghost(d.strategy.B.pace,COL_B);
+    line(d.strategy.A.pace,COL_A,atLap); line(d.strategy.B.pace,COL_B,atLap);
+  } else {
+    line(d.strategy.A.pace,COL_A); line(d.strategy.B.pace,COL_B);
+  }
+  (d.strategy.events||[]).forEach(e=>{svg.appendChild(el("line",{x1:X(e.lap-1),y1:pad,x2:X(e.lap-1),y2:H-pad,
+    stroke:T.amber,"stroke-dasharray":"3 3","stroke-width":1,opacity:.6}));
+    svg.appendChild(el("text",{x:X(e.lap-1)+4,y:pad+12,fill:T.amber,"font-size":10,"font-family":"monospace"})).textContent=e.type;});
+
+  // ---- time-machine overlay: forecast extensions + cliff markers + current-lap line
+  if(atLap){
+    ["A","B"].forEach(label=>{
+      const col=label==="A"?COL_A:COL_B;
+      const fit=getCurrentFit(d,label,atLap); if(!fit)return;
+      // forecast extension: from atLap forward to stint end (clamped)
+      const forecastEnd=Math.min(fit.stintEnd,totalLaps);
+      let fd="M";
+      for(let lap=atLap;lap<=forecastEnd;lap++){
+        const proj=fit.intercept+fit.slope*(lap-fit.stintStart);
+        fd+=(lap===atLap?"":" L")+`${X(lap-1).toFixed(1)},${Y(proj).toFixed(1)}`;
+      }
+      svg.appendChild(el("path",{d:fd,fill:"none",stroke:col,"stroke-width":1.6,
+        "stroke-dasharray":"4 4",opacity:.75}));
+      // cliff marker — label offset above (A) or below (B), right-anchored near edge
+      const cl=projectCliffLap(fit,1.5);
+      if(cl&&cl>atLap&&cl<=totalLaps){
+        const cx=X(cl-1), cy=Y(fit.intercept+fit.slope*(cl-fit.stintStart));
+        svg.appendChild(el("circle",{cx:cx,cy:cy,r:4,fill:col,stroke:T.bg,"stroke-width":1.5}));
+        const labelDy=label==="A"?-9:14;
+        const nearRight = cx > W - 110;
+        const code = label==="A"?d.meta.driverA.code:d.meta.driverB.code;
+        svg.appendChild(el("text",{x:nearRight?cx-7:cx+7, y:cy+labelDy, fill:col,
+          "font-size":10, "font-family":"monospace",
+          "text-anchor": nearRight?"end":"start"})).textContent=`${code} cliff L${cl}`;
+      }
+    });
+    // current-lap vertical line — ink color so it reads on either bg
+    svg.appendChild(el("line",{x1:X(atLap-1),y1:pad-4,x2:X(atLap-1),y2:H-pad,
+      stroke:T.ink,"stroke-width":1.2,opacity:.55}));
+    svg.appendChild(el("text",{x:X(atLap-1)+4,y:pad+2,fill:T.ink,
+      "font-size":10,"font-family":"monospace",opacity:.7})).textContent=`@ L${atLap}`;
+  }
+}
+
+/* ----------------- DECISION QUEUE · LIVE FORECAST ------------------------
+   The translation layer. From only the laps observed so far, fit a tyre-deg
+   model per stint, project forward, surface the calls a strategist would
+   actually have to make at that moment in the race. */
+
+function linearFit(xs,ys){
+  const n=xs.length; if(n<2)return null;
+  let sX=0,sY=0,sXY=0,sX2=0;
+  for(let i=0;i<n;i++){sX+=xs[i];sY+=ys[i];sXY+=xs[i]*ys[i];sX2+=xs[i]*xs[i];}
+  const denom=n*sX2-sX*sX; if(Math.abs(denom)<1e-9)return null;
+  const slope=(n*sXY-sX*sY)/denom, intercept=(sY-slope*sX)/n;
+  return {slope,intercept,n};
+}
+
+function fitStint(paceArr,stint,atLap){
+  if(!stint||atLap<stint.start)return null;
+  const upTo=Math.min(stint.end,atLap);
+  const raw=[];
+  for(let lap=stint.start;lap<=upTo;lap++){
+    const t=paceArr[lap-1];
+    if(t!=null&&isFinite(t))raw.push({age:lap-stint.start,t,lap});
+  }
+  if(raw.length<3)return null;
+  // reject SC/traffic outliers (>3s above stint median)
+  const med=raw.map(p=>p.t).slice().sort((a,b)=>a-b)[Math.floor(raw.length/2)];
+  const clean=raw.filter(p=>p.t<med+3);
+  if(clean.length<3)return null;
+  const fit=linearFit(clean.map(p=>p.age),clean.map(p=>p.t));
+  if(!fit)return null;
+  return {...fit,stintStart:stint.start,stintEnd:stint.end,compound:stint.compound,observed:clean.length};
+}
+
+function getCurrentFit(d,label,atLap){
+  const drv=d.strategy[label];
+  const stint=(drv.stints||[]).find(s=>atLap>=s.start&&atLap<=s.end);
+  return stint ? fitStint(drv.pace,stint,atLap) : null;
+}
+
+function projectCliffLap(fit,threshold=1.5){
+  if(!fit||fit.slope<=0.005)return null;
+  return Math.round(fit.stintStart+threshold/fit.slope);
+}
+
+function computeDecisions(d,atLap){
+  const out=[]; if(!d.strategy)return out;
+  const totalLaps=Math.max(d.strategy.A.pace.length,d.strategy.B.pace.length);
+
+  // CLIFF — per driver, current stint
+  ["A","B"].forEach(label=>{
+    const fit=getCurrentFit(d,label,atLap); if(!fit)return;
+    const code=d.meta["driver"+label].code;
+    const cl=projectCliffLap(fit,1.5);
+    if(cl&&cl>atLap&&cl-atLap<=8&&cl<=totalLaps){
+      const lo=cl-atLap;
+      const rec=lo<=2?"PIT":(lo<=5?"WATCH":"PREP");
+      out.push({lap:cl,target:label,rec,
+        title:`${code} · ${fit.compound} falling off`,
+        why:`Deg ${(fit.slope*1000).toFixed(0)}ms/lap over ${fit.observed} laps observed. Projected +1.5s vs stint baseline by L${cl}.`,
+        conf:fit.observed>=8?"HIGH":(fit.observed>=5?"MED":"LOW"),
+        urgency:lo});
+    }
+  });
+
+  // CROSSOVER — one car degrading materially faster than the other (real signal, not fit noise)
+  const fitA=getCurrentFit(d,"A",atLap), fitB=getCurrentFit(d,"B",atLap);
+  if(fitA&&fitB){
+    const trend=fitA.slope-fitB.slope; // +ve: A degrading faster
+    if(Math.abs(trend)>0.07 && Math.min(fitA.observed,fitB.observed)>=5){
+      const losing=trend>0?"A":"B", winning=trend>0?"B":"A";
+      const lc=d.meta["driver"+losing].code, wc=d.meta["driver"+winning].code;
+      out.push({lap:atLap+1,target:winning,rec:"TREND",
+        title:`Pace gap opening — ${wc} on better-aging rubber`,
+        why:`${lc} losing ${(Math.abs(trend)*1000).toFixed(0)}ms/lap to ${wc} on current stint. Gap compounds until the next stop.`,
+        conf:(fitA.observed>=8&&fitB.observed>=8)?"HIGH":"MED",
+        urgency:1});
+    }
+  }
+
+  // UNDERCUT — only meaningful when chaser is close to stint end AND within strike range
+  if(fitA&&fitB){
+    let cumGap=0;
+    for(let i=0;i<atLap;i++){
+      const a=d.strategy.A.pace[i], b=d.strategy.B.pace[i];
+      if(a!=null&&b!=null)cumGap+=b-a;
+    }
+    const absGap=Math.abs(cumGap);
+    const chaser=cumGap>0?"B":"A";
+    const leader=chaser==="A"?"B":"A";
+    const chaserFit=chaser==="A"?fitA:fitB;
+    const leaderFit=leader==="A"?fitA:fitB;
+    const lapsLeftChaser=chaserFit.stintEnd-atLap;
+    // window is real when: gap is closable, chaser near planned pit, both still on same stint
+    if(absGap>=0.5 && absGap<=12 && lapsLeftChaser>=1 && lapsLeftChaser<=6
+       && chaserFit.compound===leaderFit.compound){
+      const cc=d.meta["driver"+chaser].code, lc=d.meta["driver"+leader].code;
+      // expected undercut gain: ~0.6s per lap of fresh-tyre advantage before leader responds
+      const expectedGain=(lapsLeftChaser*0.6).toFixed(1);
+      out.push({lap:atLap+1,target:chaser,rec:"UNDERCUT",
+        title:`${cc} undercut window on ${lc}`,
+        why:`Gap ${absGap.toFixed(1)}s · both still on ${chaserFit.compound}. Pit one lap before ${lc} → fresh-tyre delta worth ~${expectedGain}s over the remaining ${lapsLeftChaser} lap${lapsLeftChaser===1?"":"s"} of their stint.`,
+        conf:absGap<5?"HIGH":"MED",
+        urgency:0});
+    }
+  }
+
+  out.sort((a,b)=>a.urgency-b.urgency);
+  return out;
+}
+
+// DATA column — distilled current behavior: pace, deg, quali fit
+function renderDataSummary(d, atLap){
+  const el=$("dataSummary");
+  if(!d.strategy){
+    el.innerHTML='<div class="ds-block"><div class="ds-label" style="color:var(--ink-faint)">No race data in this dataset.</div></div>';
+    return;
+  }
+  const aCode=d.meta.driverA.code, bCode=d.meta.driverB.code;
+  const recent=arr=>{const s=arr.slice(Math.max(0,atLap-3),atLap).filter(v=>v!=null);
+    return s.length?s.reduce((a,b)=>a+b,0)/s.length:null;};
+  const pa=recent(d.strategy.A.pace), pb=recent(d.strategy.B.pace);
+  const fitA=getCurrentFit(d,"A",atLap), fitB=getCurrentFit(d,"B",atLap);
+
+  let trendLine="—";
+  if(pa!=null && pb!=null){
+    const diff=pb-pa, absD=Math.abs(diff);
+    if(absD<0.05) trendLine="Even — within 0.05s/lap";
+    else trendLine=`${diff<0?bCode:aCode} faster by ${absD.toFixed(2)}s/lap`;
+  }
+
+  const degA=fitA?`${(fitA.slope*1000).toFixed(0)}ms/lap`:"—";
+  const degB=fitB?`${(fitB.slope*1000).toFixed(0)}ms/lap`:"—";
+  const sA=d.verdict?.strengthA||"—", sB=d.verdict?.strengthB||"—";
+
+  el.innerHTML=`
+    <div class="ds-block">
+      <div class="ds-label">Recent pace · last 3 laps</div>
+      <div class="ds-row"><b>${aCode}</b><span>${pa?pa.toFixed(2)+"s":"—"}</span></div>
+      <div class="ds-row"><b>${bCode}</b><span>${pb?pb.toFixed(2)+"s":"—"}</span></div>
+      <div class="ds-trend">${trendLine}</div>
+    </div>
+    <div class="ds-block">
+      <div class="ds-label">Tyre degradation · current stint</div>
+      <div class="ds-row"><b>${aCode}</b><span>${degA}</span></div>
+      <div class="ds-row"><b>${bCode}</b><span>${degB}</span></div>
+    </div>
+    <div class="ds-block">
+      <div class="ds-label">Quali strength · corner family</div>
+      <div class="ds-row"><b>${aCode}</b><span>${sA.toLowerCase()}</span></div>
+      <div class="ds-row"><b>${bCode}</b><span>${sB.toLowerCase()}</span></div>
+    </div>
+  `;
+}
+
+function decColor(dec){
+  if(dec.rec==="TREND"||dec.rec==="UNDERCUT")return dec.target==="A"?COL_A:COL_B;
+  const map={PIT:"#FF5555",WATCH:"#FFB740",PREP:"var(--ink-faint)"};
+  return map[dec.rec]||"var(--ink-faint)";
+}
+
+function renderDecisionQueue(d,atLap){
+  const hero=$("dqHero"), next=$("dqNext");
+  if(!d.strategy){hero.innerHTML='<div class="dq-empty">No race data in this dataset.</div>';next.innerHTML="";return;}
+  const decs=computeDecisions(d,atLap);
+
+  if(decs.length===0){
+    hero.innerHTML=`
+      <div class="dq-hero clear">
+        <div class="dq-hero-head">
+          <span><span class="forecast-pill">Forecast</span><span class="dq-hero-rec">ALL CLEAR · L${atLap}</span></span>
+          <span>nothing in next 8 laps</span>
+        </div>
+        <div class="dq-hero-title">No urgent calls — stints holding, no crossover, no undercut window.</div>
+      </div>`;
+    next.innerHTML="";
+    return;
+  }
+
+  const top=decs[0], rest=decs.slice(1);
+  const topCol=decColor(top);
+  hero.innerHTML=`
+    <div class="dq-hero" style="border-left-color:${topCol}">
+      <div class="dq-hero-head">
+        <span><span class="forecast-pill">Forecast</span><span class="dq-hero-rec" style="color:${topCol}">L${top.lap} · ${top.rec}</span></span>
+        <span>${top.conf} confidence</span>
+      </div>
+      <div class="dq-hero-title">${top.title}</div>
+      <div class="dq-hero-why">${top.why}</div>
+    </div>`;
+
+  if(rest.length){
+    next.innerHTML=`<div class="dq-next-eyebrow">Next up · ${rest.length} more</div>`+
+      `<div class="dq-cards">`+rest.map(dec=>{
+        const col=decColor(dec);
+        return `
+          <div class="dq-card" style="border-left-color:${col}">
+            <div class="dq-tag">
+              <span class="lap">L${dec.lap}</span>
+              <span class="rec" style="color:${col}">${dec.rec}</span>
+            </div>
+            <div>
+              <div class="dq-title">${dec.title}</div>
+              <div class="dq-why">${dec.why}</div>
+            </div>
+            <div class="dq-conf">${dec.conf}</div>
+          </div>`;
+      }).join("")+`</div>`;
+  } else {
+    next.innerHTML="";
+  }
+}
+
+function setupSlider(d){
+  if(!d.strategy){$("dqSlider").disabled=true;return;}
+  $("dqSlider").disabled=false;
+  const totalLaps=Math.max(d.strategy.A.pace.length,d.strategy.B.pace.length);
+  const slider=$("dqSlider");
+  slider.min=1; slider.max=totalLaps;
+  // smart default: inside the first stint, a few laps before its planned end
+  const firstStintEnd=(d.strategy.A.stints?.[0]?.end)||Math.floor(totalLaps*0.25);
+  slider.value=Math.max(2,Math.min(totalLaps,firstStintEnd-1));
+  $("dqTotal").textContent=totalLaps;
+  $("dqLap").textContent=slider.value;
+  slider.oninput=()=>{
+    const l=+slider.value;
+    $("dqLap").textContent=l;
+    renderContextSummary(DATA,l);
+    renderDataSummary(DATA,l);
+    renderDecisionQueue(DATA,l);
+    renderStrategy(DATA,l);
+  };
+}
+
+/* ----------------------------- BOOT -------------------------------------- */
+(function boot(){
+  // apply stored theme BEFORE first render so SVG literals bake correctly
+  setTheme(getStoredTheme());
+  $("themeToggle").addEventListener("click",()=>setTheme(isLight()?"dark":"light"));
+  try{
+    fetch("race_data.json",{cache:"no-store"})
+      .then(r=>{if(!r.ok)throw 0;return r.json();})
+      .then(j=>{ // normalise: ensure colors exist
+        j.meta.driverA.color=j.meta.driverA.color||"#27F4D2";
+        j.meta.driverB.color=j.meta.driverB.color||"#3671C6";
+        render(j);
+      })
+      .catch(()=>render(buildSample()));
+  }catch(e){ render(buildSample()); }  // file:// with no fetch, etc.
+})();
+</script>
+</body>
+</html>

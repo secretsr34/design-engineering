@@ -98,18 +98,6 @@
   .project-link .arrow{color:var(--text-t);font-size:13px;transition:color 0.2s,transform 0.2s var(--ease-out)}
   .project-link:hover .arrow{color:var(--accent);transform:translateX(3px)}
 
-  /* AMAZON LOCK */
-  .co-lock{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.4s ease}
-  .co-lock.unlocked{opacity:0;pointer-events:none}
-  .co-lock .lock-icon{font-size:1.2rem;margin-bottom:10px;opacity:0.5}
-  .co-lock .lock-label{font-size:13px;color:var(--text-s);margin-bottom:14px}
-  .co-lock .lock-form{display:flex;gap:8px}
-  .co-lock .lock-input{font-family:var(--sans);font-size:14px;padding:8px 14px;border-radius:4px;border:1px solid var(--border);background:white;color:var(--text);outline:none;width:110px;letter-spacing:0.06em;text-align:center;-webkit-appearance:none}
-  .co-lock .lock-input:focus{border-color:var(--accent)}
-  .co-lock .lock-input.error{border-color:#EA4335;animation:shake 0.4s}
-  .co-lock .lock-btn{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text-s);cursor:pointer}
-  .co-lock .lock-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
-
   /* CONTACT */
   .contact{padding:100px 0 120px;border-top:1px solid var(--border)}
   .contact h2{font-family:var(--serif);font-weight:400;font-size:1.65rem;letter-spacing:-0.015em;margin-bottom:14px}
@@ -127,8 +115,7 @@
   footer .fl a:hover{color:var(--text)}
 
   /* ANIMATIONS */
-  @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
   @keyframes nodeGlow{0%,100%{opacity:0.2}50%{opacity:0.5}}
   .reveal{opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease}
@@ -221,14 +208,6 @@
 
     <!-- AMAZON -->
     <div class="co-block reveal" id="amazonBlock">
-      <div class="co-lock" id="amazonLock">
-        <div class="lock-icon">🔒</div>
-        <span class="lock-label">Amazon work samples are password protected</span>
-        <div class="lock-form">
-          <input type="password" class="lock-input" id="amazonPwInput" placeholder="Password" autocomplete="off" />
-          <button class="lock-btn" id="amazonPwBtn">Enter</button>
-        </div>
-      </div>
       <div class="co-header">
         <span class="co-name">Amazon</span>
         <span class="co-role">Senior UX Designer · 2022–Present</span>
@@ -304,12 +283,6 @@
 <script>
   const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('vis');obs.unobserve(x.target)}})},{threshold:0.08});
   document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
-
-  // Amazon work lock — 3232 — real NDA gate, this one stays
-  const aL=document.getElementById('amazonLock'),aI=document.getElementById('amazonPwInput'),aB=document.getElementById('amazonPwBtn');
-  function tryA(){if(aI.value.trim()==='3232'){aL.classList.add('unlocked')}else{aI.classList.add('error');setTimeout(()=>aI.classList.remove('error'),600);aI.value='';aI.focus()}}
-  aB.addEventListener('click',e=>{e.preventDefault();tryA()});
-  aI.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();tryA()}});
 </script>
 </body>
 </html>

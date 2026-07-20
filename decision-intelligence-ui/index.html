@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Intelligence · UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF; --surface:#F7F7F5; --border:#E4E4E0; --ink:#111111; --ink-2:#555555; --ink-3:#8A8A86;
+  --accent:#1B3764; --accent-soft:rgba(27,55,100,0.07);
+  --good:#2D6A4F; --good-soft:rgba(45,106,79,0.10);
+  --warn:#8A6D1B; --warn-soft:rgba(178,142,32,0.13);
+  --crit:#8C2F39; --crit-soft:rgba(140,47,57,0.10);
+  --serif:'Source Serif 4',Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+header{max-width:1180px;margin:0 auto;padding:36px 32px 20px}
+header h1{font-family:var(--serif);font-weight:500;font-size:1.55rem;letter-spacing:-0.01em}
+header p{color:var(--ink-2);font-size:14px;margin-top:4px;max-width:640px}
+.toolbar{max-width:1180px;margin:0 auto;padding:8px 32px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search{flex:1;min-width:220px;max-width:340px;padding:9px 13px;font-size:14px;font-family:inherit;border:1px solid var(--border);border-radius:8px;background:var(--bg)}
+.search:focus{outline:none;border-color:var(--accent)}
+.chip{padding:7px 14px;font-size:13px;border:1px solid var(--border);border-radius:100px;background:var(--bg);cursor:pointer;color:var(--ink-2);font-family:inherit}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.layout{max-width:1180px;margin:0 auto;padding:0 32px 64px;display:grid;grid-template-columns:390px 1fr;gap:24px;align-items:start}
+.registry{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.registry-head{padding:12px 18px;background:var(--surface);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between}
+.decision{display:block;width:100%;text-align:left;padding:15px 18px;border:none;border-bottom:1px solid var(--border);background:var(--bg);cursor:pointer;font-family:inherit;font-size:inherit}
+.decision:last-child{border-bottom:none}
+.decision:hover{background:var(--surface)}
+.decision[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.decision .t{font-weight:600;font-size:14px;line-height:1.4;color:var(--ink)}
+.decision .m{display:flex;gap:8px;margin-top:7px;align-items:center;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;padding:2.5px 8px;border-radius:5px}
+.badge.explicit{background:var(--accent-soft);color:var(--accent)}
+.badge.implied{background:var(--warn-soft);color:var(--warn)}
+.badge.deferred{background:var(--surface);color:var(--ink-3);border:1px solid var(--border)}
+.score{font-family:var(--mono);font-size:12.5px;font-weight:500;margin-left:auto}
+.score .of{color:var(--ink-3);font-weight:400}
+.status{font-size:12px;color:var(--ink-3)}
+.empty{padding:28px 18px;color:var(--ink-3);font-size:13.5px}
+.detail{border:1px solid var(--border);border-radius:12px;padding:26px 28px}
+.detail h2{font-family:var(--serif);font-weight:500;font-size:1.25rem;line-height:1.35;max-width:560px}
+.detail .meta{display:flex;gap:10px;margin:10px 0 0;align-items:center;flex-wrap:wrap}
+.sec{margin-top:28px}
+.sec h3{font-family:var(--mono);font-size:11px;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px}
+.checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.check{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:9px;padding:12px 14px}
+.check .ic{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px}
+.check.pass .ic{background:var(--good-soft);color:var(--good)}
+.check.fail .ic{background:var(--crit-soft);color:var(--crit)}
+.check .l{font-size:13.5px;font-weight:600}
+.check .d{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.findings{display:flex;flex-direction:column;gap:8px}
+.finding{display:flex;gap:12px;align-items:baseline;border-left:2px solid var(--border);padding:2px 0 2px 14px}
+.sev{font-family:var(--mono);font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;flex-shrink:0}
+.sev.high{background:var(--crit-soft);color:var(--crit)}
+.sev.medium{background:var(--warn-soft);color:var(--warn)}
+.sev.low{background:var(--surface);color:var(--ink-3);border:1px solid var(--border)}
+.finding .fl{font-size:14px;font-weight:600}
+.finding .fd{font-size:13px;color:var(--ink-2)}
+.steps{list-style:none;display:flex;flex-direction:column;gap:8px}
+.steps li{display:flex;gap:12px;align-items:baseline}
+.steps .a{font-size:14px;font-weight:600}
+.steps .w{font-size:13px;color:var(--ink-2)}
+.cfs{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.cf{border:1px solid var(--border);border-radius:9px;padding:14px 16px}
+.cf .p{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--accent)}
+.cf .p .u{font-size:11px;color:var(--ink-3);font-weight:400;letter-spacing:0.04em}
+.cf .n{font-size:13.5px;font-weight:600;margin-top:2px}
+.cf .tr{font-size:12.5px;color:var(--ink-2);margin-top:6px}
+.chart-wrap{position:relative}
+.chart-note{font-size:12.5px;color:var(--ink-2);margin-top:10px;max-width:560px}
+svg.tchart{width:100%;height:auto;display:block}
+.tt{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;line-height:1.45;padding:7px 10px;border-radius:7px;max-width:230px;opacity:0;transition:opacity 0.12s;transform:translate(-50%,-110%)}
+.tt .v{font-family:var(--mono);font-weight:500}
+.foot{max-width:1180px;margin:0 auto;padding:0 32px 48px;color:var(--ink-3);font-size:12.5px;max-width:1180px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.detail{order:-1}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Decision Intelligence</h1>
+  <p>A reasoning-quality workspace: every decision an organization records is classified, checked for structural integrity, and projected forward in time. This is the interface layer, running on fixture data - the scoring engine behind it is private.</p>
+</header>
+
+<div class="toolbar">
+  <input class="search" id="search" type="search" placeholder="Search decisions&hellip;" aria-label="Search decisions">
+  <button class="chip" data-filter="all" aria-pressed="true">All</button>
+  <button class="chip" data-filter="attention" aria-pressed="false">Needs attention</button>
+  <button class="chip" data-filter="high" aria-pressed="false">High integrity</button>
+</div>
+
+<main class="layout">
+  <section class="registry" aria-label="Decision registry">
+    <div class="registry-head"><span>Decisions</span><span id="count"></span></div>
+    <div id="list"></div>
+  </section>
+  <section class="detail" id="detail" aria-live="polite"></section>
+</main>
+
+<p class="foot">Interface rebuild with representative fixture data. Integrity scores, findings, and projections shown here are static examples - in the production system they are computed by a private engine.</p>
+
+<script>
+// ————— Fixture data. Static by design: this build ships the interface only. —————
+const DECISIONS = [
+  {
+    id: 'aws-migration',
+    title: 'Migrate core infrastructure to AWS by Q3',
+    type: 'explicit', status: 'In review', score: 7.4,
+    checks: [
+      { l: 'Ownership', pass: true,  d: 'Sarah owns the migration end to end' },
+      { l: 'Success metrics', pass: true, d: '99.9% uptime target, cost delta tracked monthly' },
+      { l: 'Assumptions documented', pass: true, d: 'Traffic patterns assumed stable through transition' },
+      { l: 'Critical issues', pass: false, d: 'Timeline risk flagged, no mitigation recorded' },
+    ],
+    findings: [
+      { sev: 'medium', l: 'Optimism bias', d: 'Timeline treated as achievable without contingency' },
+      { sev: 'low', l: 'Anchoring bias', d: 'Cost saving quoted against a single reference figure' },
+    ],
+    steps: [
+      { a: 'Record a timeline mitigation', w: 'The one failing check. A slip scenario with owner and trigger date closes it.' },
+      { a: 'Add a second cost baseline', w: 'Weakens the anchoring finding and makes the savings claim defensible.' },
+    ],
+    cfs: [
+      { p: 35, n: 'Status quo', tr: 'No migration cost, but capacity ceiling reached within 12 months' },
+      { p: 25, n: 'Opposite direction', tr: 'Double down on owned hardware; capex heavy, full control' },
+      { p: 18, n: 'Delay six months', tr: 'More planning room; savings deferred and team context decays' },
+    ],
+    proj: {
+      points: [7.4, 6.8, 6.1, 4.9, 4.2],
+      why: [
+        'As assessed today',
+        'Assumption review due; traffic pattern claim ages',
+        'Owner continuity risk begins to weigh',
+        'Original cost baseline likely stale',
+        'Most recorded context predates team turnover',
+      ],
+    },
+  },
+  {
+    id: 'microservices',
+    title: 'Adopt microservices architecture over monolith',
+    type: 'explicit', status: 'Committed', score: 8.1,
+    checks: [
+      { l: 'Ownership', pass: true, d: 'Platform team named with a single accountable lead' },
+      { l: 'Success metrics', pass: true, d: 'Deploy frequency and rollback rate defined' },
+      { l: 'Assumptions documented', pass: true, d: 'Service boundaries mapped before commitment' },
+      { l: 'Critical issues', pass: true, d: 'None open' },
+    ],
+    findings: [
+      { sev: 'low', l: 'Authority bias', d: 'Recommendation leans on an external reference architecture' },
+    ],
+    steps: [
+      { a: 'Schedule a six-month boundary review', w: 'Service maps drift; a dated checkpoint keeps the assumption honest.' },
+    ],
+    cfs: [
+      { p: 40, n: 'Status quo', tr: 'Monolith remains workable near-term; scaling cost arrives later' },
+      { p: 15, n: 'Modular monolith', tr: 'Most of the benefit, less operational surface, weaker isolation' },
+    ],
+    proj: {
+      points: [8.1, 7.9, 7.5, 6.8, 6.2],
+      why: [
+        'As assessed today',
+        'Stable; metrics still current',
+        'Boundary map needs its first review',
+        'Deploy tooling assumptions age',
+        'Original context partially superseded',
+      ],
+    },
+  },
+  {
+    id: 'db-selection',
+    title: 'Select the specific database platform',
+    type: 'deferred', status: 'Pending', score: 3.2,
+    checks: [
+      { l: 'Ownership', pass: false, d: 'No named owner for the evaluation' },
+      { l: 'Success metrics', pass: false, d: 'No decision criteria recorded' },
+      { l: 'Assumptions documented', pass: true, d: 'Deferral rationale captured: pending workload data' },
+      { l: 'Critical issues', pass: false, d: 'Migration timeline depends on this and is unblocked by no one' },
+    ],
+    findings: [
+      { sev: 'high', l: 'Deferral without trigger', d: 'Nothing defines when this decision comes due' },
+    ],
+    steps: [
+      { a: 'Assign an evaluation owner', w: 'Highest-leverage fix: two failing checks trace to this.' },
+      { a: 'Set a due-by condition', w: 'Deferral is fine; open-ended deferral on the critical path is not.' },
+      { a: 'Write three acceptance criteria', w: 'Turns the eventual choice into a check against stated needs.' },
+    ],
+    cfs: [
+      { p: 30, n: 'Decide now with defaults', tr: 'Unblocks the migration; risks a rework cycle if workload data surprises' },
+    ],
+    proj: {
+      points: [3.2, 2.6, 2.0, 1.4, 1.0],
+      why: [
+        'As assessed today',
+        'Unowned deferrals decay fastest',
+        'Blocking cost compounds against the migration',
+        'Original deferral rationale stale',
+        'Effectively a non-decision by this point',
+      ],
+    },
+  },
+  {
+    id: 'ui-framework',
+    title: 'Standardize the new UI framework',
+    type: 'implied', status: 'Unreviewed', score: 4.8,
+    checks: [
+      { l: 'Ownership', pass: false, d: 'Implied by recent commits, never assigned' },
+      { l: 'Success metrics', pass: false, d: 'No definition of what standardization achieves' },
+      { l: 'Assumptions documented', pass: true, d: 'Team familiarity assumed from two prior projects' },
+      { l: 'Critical issues', pass: true, d: 'None open' },
+    ],
+    findings: [
+      { sev: 'medium', l: 'Sunk cost fallacy', d: 'Prior investment in the framework cited as the main justification' },
+      { sev: 'medium', l: 'Implied commitment', d: 'The org is acting on a decision no one explicitly made' },
+    ],
+    steps: [
+      { a: 'Make the decision explicit', w: 'Either commit with an owner and criteria, or genuinely leave it open.' },
+    ],
+    cfs: [
+      { p: 45, n: 'Status quo', tr: 'Drift continues; each new component deepens the implied commitment' },
+    ],
+    proj: {
+      points: [4.8, 4.3, 3.7, 2.9, 2.4],
+      why: [
+        'As assessed today',
+        'Implied decisions erode without ratification',
+        'Mixed-framework cost starts to surface',
+        'Refactor cost now material',
+        'Decision made itself, on the worst terms',
+      ],
+    },
+  },
+  {
+    id: 'oncall-rotation',
+    title: 'Move to a follow-the-sun on-call rotation',
+    type: 'explicit', status: 'Committed', score: 8.8,
+    checks: [
+      { l: 'Ownership', pass: true, d: 'Ops lead owns rollout and the retro' },
+      { l: 'Success metrics', pass: true, d: 'Page-to-ack time and off-hours pages per engineer' },
+      { l: 'Assumptions documented', pass: true, d: 'Coverage model validated against three months of paging data' },
+      { l: 'Critical issues', pass: true, d: 'None open' },
+    ],
+    findings: [],
+    steps: [
+      { a: 'Nothing outstanding', w: 'Strongest decision in the registry. Retro scheduled; leave it alone.' },
+    ],
+    cfs: [
+      { p: 20, n: 'Status quo', tr: 'Single-region rotation holds, at continued off-hours cost' },
+    ],
+    proj: {
+      points: [8.8, 8.7, 8.4, 7.9, 7.5],
+      why: [
+        'As assessed today',
+        'Metrics fresh, owner active',
+        'Rotation assumptions still measured',
+        'Team composition drift begins',
+        'Ordinary decay only',
+      ],
+    },
+  },
+  {
+    id: 'vendor-renewal',
+    title: 'Renew the analytics vendor for two more years',
+    type: 'implied', status: 'In review', score: 5.6,
+    checks: [
+      { l: 'Ownership', pass: true, d: 'Procurement named, engineering counterpart missing' },
+      { l: 'Success metrics', pass: false, d: 'Renewal treated as default; no usage bar defined' },
+      { l: 'Assumptions documented', pass: true, d: 'Migration cost assumed prohibitive, last estimated two years ago' },
+      { l: 'Critical issues', pass: true, d: 'None open' },
+    ],
+    findings: [
+      { sev: 'medium', l: 'Confirmation bias', d: 'Only evidence supporting renewal was collected' },
+      { sev: 'low', l: 'Anchoring bias', d: 'Two-year-old migration estimate anchors the whole case' },
+    ],
+    steps: [
+      { a: 'Define a usage threshold', w: 'A renewal should have to clear a bar, not just avoid a decision.' },
+      { a: 'Refresh the migration estimate', w: 'The anchor is stale; the market moved.' },
+    ],
+    cfs: [
+      { p: 30, n: 'One-year renewal', tr: 'Buys evaluation time at slightly worse pricing' },
+      { p: 20, n: 'Migrate now', tr: 'Highest disruption; only option that tests the core assumption' },
+    ],
+    proj: {
+      points: [5.6, 5.2, 4.6, 3.8, 3.3],
+      why: [
+        'As assessed today',
+        'Usage question remains unanswered',
+        'Locked in; leverage gone either way',
+        'Assumptions two renewals old',
+        'Default-renewal pattern entrenched',
+      ],
+    },
+  },
+];
+
+const HORIZONS = ['Now', '6 mo', '1 yr', '3 yr', '5 yr'];
+
+// ————— State —————
+let selected = DECISIONS[0].id;
+let filter = 'all';
+let query = '';
+
+const scoreTone = s => s >= 7 ? 'var(--good)' : s >= 5 ? 'var(--warn)' : 'var(--crit)';
+
+// ————— Registry —————
+function renderList() {
+  const list = document.getElementById('list');
+  const visible = DECISIONS.filter(d => {
+    if (filter === 'attention' && d.score >= 5) return false;
+    if (filter === 'high' && d.score < 7) return false;
+    return d.title.toLowerCase().includes(query);
+  });
+  document.getElementById('count').textContent = `${visible.length} of ${DECISIONS.length}`;
+  list.innerHTML = visible.length ? '' : '<div class="empty">No decisions match.</div>';
+  for (const d of visible) {
+    const b = document.createElement('button');
+    b.className = 'decision';
+    b.setAttribute('aria-current', d.id === selected);
+    b.innerHTML = `
+      <div class="t">${d.title}</div>
+      <div class="m">
+        <span class="badge ${d.type}">${d.type}</span>
+        <span class="status">${d.status}</span>
+        <span class="score" style="color:${scoreTone(d.score)}">${d.score.toFixed(1)}<span class="of">/10</span></span>
+      </div>`;
+    b.addEventListener('click', () => { selected = d.id; render(); });
+    list.appendChild(b);
+  }
+}
+
+// ————— Temporal projection chart (single series, 0-10 scale) —————
+function chart(d) {
+  const W = 640, H = 220, P = { t: 18, r: 74, b: 30, l: 34 };
+  const iw = W - P.l - P.r, ih = H - P.t - P.b;
+  const x = i => P.l + (i / (d.proj.points.length - 1)) * iw;
+  const y = v => P.t + (1 - v / 10) * ih;
+  const pts = d.proj.points.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+  const grid = [0, 5, 10].map(v =>
+    `<line x1="${P.l}" y1="${y(v)}" x2="${W - P.r}" y2="${y(v)}" stroke="var(--border)" stroke-width="1"/>
+     <text x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--ink-3)" font-family="var(--mono)">${v}</text>`
+  ).join('');
+  const labels = HORIZONS.map((h, i) =>
+    `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="var(--ink-3)" font-family="var(--mono)">${h}</text>`
+  ).join('');
+  const last = d.proj.points.length - 1;
+  const dots = d.proj.points.map((v, i) =>
+    `<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="var(--accent)"/>
+     <circle cx="${x(i)}" cy="${y(v)}" r="14" fill="transparent" data-i="${i}" class="hit"/>`
+  ).join('');
+  return `
+  <div class="chart-wrap">
+    <svg class="tchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected integrity, now through five years: ${d.proj.points.join(', ')}">
+      ${grid}${labels}
+      <polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>
+      ${dots}
+      <text x="${x(last) + 12}" y="${y(d.proj.points[last]) + 4}" font-size="12" font-weight="600" fill="var(--ink)">${d.proj.points[last].toFixed(1)} at 5 yr</text>
+    </svg>
+    <div class="tt" id="tt"></div>
+  </div>
+  <p class="chart-note">Integrity is projected to decay as assumptions age, owners change, and context is superseded. Hover a point for the reason at each horizon.</p>`;
+}
+
+function wireChart(d) {
+  const wrap = document.querySelector('.chart-wrap');
+  const tt = document.getElementById('tt');
+  if (!wrap) return;
+  wrap.querySelectorAll('.hit').forEach(c => {
+    c.addEventListener('mouseenter', e => {
+      const i = +e.target.dataset.i;
+      const svg = wrap.querySelector('svg'), r = svg.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+      const cx = +e.target.getAttribute('cx') / 640 * r.width + (r.left - w.left);
+      const cy = +e.target.getAttribute('cy') / 220 * r.height + (r.top - w.top);
+      tt.innerHTML = `<span class="v">${HORIZONS[i]} · ${d.proj.points[i].toFixed(1)}/10</span><br>${d.proj.why[i]}`;
+      tt.style.left = cx + 'px'; tt.style.top = cy + 'px'; tt.style.opacity = 1;
+    });
+    c.addEventListener('mouseleave', () => { tt.style.opacity = 0; });
+  });
+}
+
+// ————— Detail —————
+function renderDetail() {
+  const d = DECISIONS.find(x => x.id === selected);
+  const el = document.getElementById('detail');
+  if (!d) { el.innerHTML = '<div class="empty">Select a decision.</div>'; return; }
+  el.innerHTML = `
+    <h2>${d.title}</h2>
+    <div class="meta">
+      <span class="badge ${d.type}">${d.type}</span>
+      <span class="status">${d.status}</span>
+      <span class="score" style="color:${scoreTone(d.score)};margin-left:0">${d.score.toFixed(1)}<span class="of">/10 integrity</span></span>
+    </div>
+
+    <div class="sec">
+      <h3>Integrity breakdown</h3>
+      <div class="checks">
+        ${d.checks.map(c => `
+          <div class="check ${c.pass ? 'pass' : 'fail'}">
+            <span class="ic">${c.pass ? '✓' : '✕'}</span>
+            <span><span class="l">${c.l}</span><div class="d">${c.d}</div></span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    ${d.findings.length ? `
+    <div class="sec">
+      <h3>Findings</h3>
+      <div class="findings">
+        ${d.findings.map(f => `
+          <div class="finding">
+            <span class="sev ${f.sev}">${f.sev}</span>
+            <span><span class="fl">${f.l}</span> <span class="fd">- ${f.d}</span></span>
+          </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <div class="sec">
+      <h3>Next steps</h3>
+      <ul class="steps">
+        ${d.steps.map(s => `<li><span class="a">${s.a}.</span><span class="w">${s.w}</span></li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="sec">
+      <h3>Counterfactuals</h3>
+      <div class="cfs">
+        ${d.cfs.map(c => `
+          <div class="cf">
+            <div class="p">${c.p}<span class="u">% better</span></div>
+            <div class="n">${c.n}</div>
+            <div class="tr">${c.tr}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="sec">
+      <h3>Temporal projection</h3>
+      ${chart(d)}
+    </div>`;
+  wireChart(d);
+}
+
+function render() { renderList(); renderDetail(); }
+
+document.getElementById('search').addEventListener('input', e => { query = e.target.value.toLowerCase(); renderList(); });
+document.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
+  filter = ch.dataset.filter;
+  document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c === ch));
+  renderList();
+}));
+
+render();
+</script>
+</body>
+</html>
